@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import CustomCursor from "@/components/ui/CustomCursor";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import SmoothScroll from "@/components/ui/SmoothScroll";
@@ -46,7 +45,6 @@ export default function RootLayout({
       <body>
         <NoiseOverlay />
         <LoadingScreen />
-        <CustomCursor />
         <ScrollProgress />
         <SmoothScroll>
           {children}
