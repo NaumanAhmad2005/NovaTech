@@ -26,12 +26,22 @@ html {
   font-size: 16px;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   overflow-x: hidden;
   cursor: none;
+}
+
+/* Restore cursor on touch devices (Firefox Android, etc.) */
+@media (pointer: coarse) {
+  body { cursor: auto; }
+  .cursor-dot, .cursor-ring { display: none; }
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -87,19 +97,31 @@ h1, h2, h3, h4, h5, h6 {
   transition: transform 0.15s ease-out, width 0.3s, height 0.3s, border-color 0.3s;
 }
 
-/* Glassmorphism */
+/* Glassmorphism — solid fallback for browsers without backdrop-filter */
 .glass {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(15, 23, 42, 0.92);
   border: 1px solid rgba(59, 130, 246, 0.15);
 }
 
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .glass {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
 .glass-card {
-  background: rgba(17, 24, 39, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(17, 24, 39, 0.95);
   border: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .glass-card {
+    background: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
 }
 
 /* Neon Glow Effects */
