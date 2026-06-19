@@ -4,18 +4,13 @@ import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { Send, MapPin, Mail, Phone, Clock, CheckCircle } from "lucide-react";
 
-const offices = [
-  { city: "Dubai", country: "UAE", emoji: "🇦🇪", role: "MENA HQ", timezone: "GST (UTC+4)" },
-  { city: "London", country: "UK", emoji: "🇬🇧", role: "European Office", timezone: "BST (UTC+1)" },
-  { city: "New York", country: "USA", emoji: "🇺🇸", role: "Americas Office", timezone: "EST (UTC-5)" },
-  { city: "Singapore", country: "SG", emoji: "🇸🇬", role: "APAC Office", timezone: "SGT (UTC+8)" },
-];
+
 
 export default function ContactSection() {
   const titleRef = useRef(null);
   const inView = useInView(titleRef, { once: true });
   const [formState, setFormState] = useState({
-    name: "", email: "", company: "", budget: "", message: "", service: ""
+    name: "", email: "", phone: "", company: "", budget: "", message: "", service: ""
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -92,7 +87,7 @@ export default function ContactSection() {
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit} className="glass-card rounded-3xl p-8 border border-blue-500/10 space-y-5">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs text-slate-500 font-mono mb-2">FULL NAME *</label>
                     <input
@@ -116,7 +111,17 @@ export default function ContactSection() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-slate-500 font-mono mb-2">PHONE NUMBER</label>
+                    <input
+                      type="tel"
+                      value={formState.phone}
+                      onChange={e => setFormState(s => ({ ...s, phone: e.target.value }))}
+                      placeholder="+1 (555) 000-0000"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors"
+                    />
+                  </div>
                   <div>
                     <label className="block text-xs text-slate-500 font-mono mb-2">COMPANY</label>
                     <input
@@ -125,6 +130,28 @@ export default function ContactSection() {
                       placeholder="Acme Corp"
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors"
                     />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-slate-500 font-mono mb-2">SERVICE NEEDED</label>
+                    <select
+                      value={formState.service}
+                      onChange={e => setFormState(s => ({ ...s, service: e.target.value }))}
+                      className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-slate-300 text-sm focus:outline-none focus:border-blue-500/50 transition-colors"
+                    >
+                      <option value="">Select a service</option>
+                      <option>Custom Software Development</option>
+                      <option>Web Application</option>
+                      <option>Mobile App</option>
+                      <option>AI / ML Integration</option>
+                      <option>Cloud & DevOps</option>
+                      <option>Enterprise ERP/CRM</option>
+                      <option>Cybersecurity Audit</option>
+                      <option>UI/UX Design</option>
+                      <option>Other</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-xs text-slate-500 font-mono mb-2">BUDGET RANGE</label>
@@ -142,25 +169,7 @@ export default function ContactSection() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs text-slate-500 font-mono mb-2">SERVICE NEEDED</label>
-                  <select
-                    value={formState.service}
-                    onChange={e => setFormState(s => ({ ...s, service: e.target.value }))}
-                    className="w-full bg-[#0F172A] border border-white/10 rounded-xl px-4 py-3 text-slate-300 text-sm focus:outline-none focus:border-blue-500/50 transition-colors"
-                  >
-                    <option value="">Select a service</option>
-                    <option>Custom Software Development</option>
-                    <option>Web Application</option>
-                    <option>Mobile App</option>
-                    <option>AI / ML Integration</option>
-                    <option>Cloud & DevOps</option>
-                    <option>Enterprise ERP/CRM</option>
-                    <option>Cybersecurity Audit</option>
-                    <option>UI/UX Design</option>
-                    <option>Other</option>
-                  </select>
-                </div>
+
 
                 <div>
                   <label className="block text-xs text-slate-500 font-mono mb-2">PROJECT DETAILS *</label>
@@ -214,8 +223,8 @@ export default function ContactSection() {
               <h3 className="text-white font-bold mb-5" style={{ fontFamily: 'Space Grotesk' }}>Direct Contact</h3>
               <div className="space-y-4">
                 {[
-                  { icon: Mail, label: "Email", value: "hello@novatech.io", color: "#38BDF8" },
-                  { icon: Phone, label: "Phone", value: "+1 (555) 000-NOVA", color: "#3B82F6" },
+                  { icon: Mail, label: "Email", value: "naumanf25@gmail.com", color: "#38BDF8" },
+                  { icon: Phone, label: "Phone", value: "+92 302 646 8105", color: "#3B82F6" },
                   { icon: Clock, label: "Response Time", value: "Within 4 business hours", color: "#10B981" },
                 ].map(item => (
                   <div key={item.label} className="flex items-center gap-4">
@@ -234,28 +243,7 @@ export default function ContactSection() {
               </div>
             </div>
 
-            {/* Offices */}
-            <div className="glass-card rounded-2xl p-6 border border-blue-500/10">
-              <h3 className="text-white font-bold mb-5 flex items-center gap-2" style={{ fontFamily: 'Space Grotesk' }}>
-                <MapPin className="w-4 h-4 text-blue-400" />
-                Our Offices
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {offices.map((office) => (
-                  <div
-                    key={office.city}
-                    className="glass rounded-xl p-3 border border-white/5 hover:border-blue-500/20 transition-all"
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span>{office.emoji}</span>
-                      <span className="text-white font-medium text-sm">{office.city}</span>
-                    </div>
-                    <div className="text-xs text-slate-500">{office.role}</div>
-                    <div className="text-xs text-slate-600 font-mono mt-0.5">{office.timezone}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+
 
             {/* Trust signals */}
             <div className="glass-card rounded-2xl p-6 border border-blue-500/10">
