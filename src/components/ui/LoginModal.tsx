@@ -13,24 +13,45 @@ interface LoginModalProps {
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const supabase = createClient();
 
-  const handleEmailAuth = async (type: 'login' | 'signup') => {
-    setLoadingProvider(type);
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoadingProvider(mode);
     setErrorMsg(null);
+
+    // Fast-fail check
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')) {
+      setErrorMsg("Database is not configured yet! Please update your .env.local file.");
+      setLoadingProvider(null);
+      return;
+    }
+
     try {
-      if (type === 'signup') {
+      if (mode === 'signup') {
+        if (password !== confirmPassword) {
+          throw new Error("Passwords do not match.");
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
+            data: { full_name: name, phone },
             emailRedirectTo: `${window.location.origin}/auth/callback`,
           }
         });
         if (error) throw error;
         setErrorMsg("Success! Please check your email for a confirmation link.");
+        // Reset form to login
+        setMode('login');
+        setPassword('');
+        setConfirmPassword('');
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -56,6 +77,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       // Set a dummy cookie and hard redirect to portal
       document.cookie = "demo_client_session=true; path=/; max-age=86400";
       window.location.href = "/portal";
+      return;
+    }
+
+    // Fast-fail check
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')) {
+      setErrorMsg("Google OAuth is not configured on your Supabase backend yet.");
+      setLoadingProvider(null);
       return;
     }
 
@@ -95,7 +123,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-md overflow-hidden rounded-3xl bg-[#0F172A] border border-white/10 shadow-2xl shadow-blue-900/20"
+            className="relative w-full max-w-md overflow-hidden rounded-3xl bg-[#0F172A] border border-white/10 shadow-2xl shadow-blue-900/20 max-h-[90vh] overflow-y-auto scrollbar-hide"
           >
             {/* Background Effects */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-[300px] bg-blue-500/20 blur-[100px] rounded-full pointer-events-none" />
@@ -114,20 +142,46 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 </div>
               </div>
 
-              <h2 className="text-2xl font-bold text-white text-center mb-2 font-mono">Client Portal</h2>
+              <h2 className="text-2xl font-bold text-white text-center mb-2 font-mono">
+                {mode === 'login' ? 'Client Portal' : 'Create Account'}
+              </h2>
               <p className="text-slate-400 text-center text-sm mb-8">
-                Sign in to manage your projects, view progress, and collaborate with your team.
+                {mode === 'login' 
+                  ? 'Sign in to manage your projects, view progress, and collaborate.' 
+                  : 'Join NovaTech to track your projects in real-time.'}
               </p>
 
               <div className="space-y-4">
-                {/* Email / Password Form */}
-                <form 
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleEmailAuth('login');
-                  }} 
-                  className="space-y-3"
-                >
+                {/* Form */}
+                <form onSubmit={handleEmailAuth} className="space-y-3">
+                  
+                  {mode === 'signup' && (
+                    <>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-400 mb-1">Full Name</label>
+                        <input
+                          type="text"
+                          required
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className="block w-full px-3 py-2.5 border border-white/10 rounded-xl bg-black/30 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all"
+                          placeholder="John Doe"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-400 mb-1">Phone Number</label>
+                        <input
+                          type="tel"
+                          required
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className="block w-full px-3 py-2.5 border border-white/10 rounded-xl bg-black/30 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all"
+                          placeholder="+1 (555) 000-0000"
+                        />
+                      </div>
+                    </>
+                  )}
+
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-1">Email</label>
                     <div className="relative">
@@ -157,21 +211,43 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     />
                   </div>
 
-                  <div className="flex gap-3 pt-2">
+                  {mode === 'signup' && (
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1">Confirm Password</label>
+                      <input
+                        type="password"
+                        required
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="block w-full px-3 py-2.5 border border-white/10 rounded-xl bg-black/30 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-all"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  )}
+
+                  <div className="pt-2">
                     <button
                       type="submit"
                       disabled={loadingProvider !== null}
-                      className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-medium transition-colors text-sm flex justify-center items-center h-[44px]"
+                      className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-medium transition-colors text-sm flex justify-center items-center h-[44px]"
                     >
-                      {loadingProvider === 'login' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Log In"}
+                      {loadingProvider === mode ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        mode === 'login' ? "Log In" : "Create Account"
+                      )}
                     </button>
+                  </div>
+                  
+                  <div className="text-center mt-2">
                     <button
                       type="button"
-                      onClick={() => handleEmailAuth('signup')}
-                      disabled={loadingProvider !== null}
-                      className="flex-1 bg-white/5 hover:bg-white/10 text-white border border-white/10 py-2.5 rounded-xl font-medium transition-colors text-sm flex justify-center items-center h-[44px]"
+                      onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+                      className="text-xs text-slate-400 hover:text-white transition-colors"
                     >
-                      {loadingProvider === 'signup' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign Up"}
+                      {mode === 'login' 
+                        ? "Don't have an account? Sign up" 
+                        : "Already have an account? Log in"}
                     </button>
                   </div>
                 </form>
