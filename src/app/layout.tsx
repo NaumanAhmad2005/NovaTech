@@ -4,6 +4,7 @@ import LoadingScreen from "@/components/ui/LoadingScreen";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import SmoothScroll from "@/components/ui/SmoothScroll";
 import NoiseOverlay from "@/components/ui/NoiseOverlay";
+import { ThemeProvider } from "@/lib/ThemeContext";
 
 export const metadata: Metadata = {
   title: "NovaTech — Engineering Tomorrow",
@@ -43,12 +44,14 @@ export default function RootLayout({
         <meta name="theme-color" content="#050816" />
       </head>
       <body>
-        <NoiseOverlay />
-        <LoadingScreen />
-        <ScrollProgress />
-        <SmoothScroll>
-          {children}
-        </SmoothScroll>
+        <ThemeProvider>
+          <NoiseOverlay />
+          <LoadingScreen />
+          <ScrollProgress />
+          <SmoothScroll>
+            {children}
+          </SmoothScroll>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -45,7 +45,9 @@ function MatrixRain() {
   return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none" style={{ zIndex: 99990 }} />;
 }
 
-// Terminal
+// ─── Terminal ────────────────────────────────────────────────────────────────
+type TerminalMode = "normal" | "admin-id" | "admin-pass";
+
 function Terminal({ onClose }: { onClose: () => void }) {
   const [lines, setLines] = useState<string[]>([
     "NovaTech Terminal v2.6.1",
@@ -53,28 +55,133 @@ function Terminal({ onClose }: { onClose: () => void }) {
     "",
   ]);
   const [input, setInput] = useState("");
+  const [mode, setMode] = useState<TerminalMode>("normal");
+  const [adminId, setAdminId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [lines]);
 
+  const print = (...msgs: string[]) => {
+    setLines(prev => [...prev, ...msgs, ""]);
+  };
+
+  const handleAdminLogin = async (password: string) => {
+    setIsLoading(true);
+    print("  Authenticating...");
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminId, password }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        print(
+          "  ✅ Access Granted.",
+          "  ─────────────────────────────────",
+          "  Admin Panel is under construction.",
+          "  Check back soon, operator.",
+          "  ─────────────────────────────────",
+        );
+      } else {
+        print(`  ❌ ${data.error ?? "Invalid credentials."}`);
+      }
+    } catch {
+      print("  ❌ Network error. Could not reach server.");
+    } finally {
+      setIsLoading(false);
+      setMode("normal");
+      setAdminId("");
+    }
+  };
+
   const handleCommand = (cmd: string) => {
     const c = cmd.trim().toLowerCase();
+
+    // ── Admin ID prompt mode ──
+    if (mode === "admin-id") {
+      setLines(prev => [...prev, `  ID: ${cmd}`]);
+      if (!cmd.trim()) {
+        print("  ❌ Admin ID cannot be empty.");
+        setMode("normal");
+        return;
+      }
+      setAdminId(cmd.trim());
+      setMode("admin-pass");
+      setLines(prev => [...prev, "  Enter password:"]);
+      return;
+    }
+
+    // ── Password prompt mode ──
+    if (mode === "admin-pass") {
+      setLines(prev => [...prev, "  Password: ••••••••"]);
+      handleAdminLogin(cmd.trim());
+      return;
+    }
+
+    // ── Normal commands ──
+    setLines(prev => [...prev, `> ${cmd}`]);
+
     const responses: Record<string, string[]> = {
-      help: ["Available commands:", "  about    — About NovaTech", "  stack    — Our tech stack", "  jobs     — Open positions", "  contact  — Contact info", "  clear    — Clear terminal", "  exit     — Close terminal"],
-      about: ["NovaTech Technologies Inc.", "Engineering Tomorrow Since 2018", "50+ Enterprise Projects | 12 Countries | 120 Engineers"],
-      stack: ["Frontend:  React · Next.js · TypeScript · Vue", "Backend:   Node.js · Python · Go · .NET", "AI:        OpenAI · LangChain · TensorFlow", "Cloud:     AWS · Azure · GCP · Kubernetes"],
-      jobs: ["Open Positions:", "  → Senior Full-Stack Engineer (Remote)", "  → ML Engineer — LLM Systems (Dubai)", "  → DevOps Lead (London)", "  → Product Designer (Remote)", "  Apply: careers@novatech.io"],
-      contact: ["hello@novatech.io", "+1 (555) 000-NOVA", "novatech.io"],
+      help: [
+        "Available commands:",
+        "  about     — About NovaTech",
+        "  stack     — Our tech stack",
+        "  jobs      — Open positions",
+        "  contact   — Contact info",
+        "  admin     — Access admin panel",
+        "  clear     — Clear terminal",
+        "  exit      — Close terminal",
+      ],
+      about: [
+        "NovaTech Technologies Inc.",
+        "Engineering Tomorrow Since 2018",
+        "50+ Enterprise Projects | 12 Countries | 120 Engineers",
+      ],
+      stack: [
+        "Frontend:  React · Next.js · TypeScript · Vue",
+        "Backend:   Node.js · Python · Go · .NET",
+        "AI:        OpenAI · LangChain · TensorFlow",
+        "Cloud:     AWS · Azure · GCP · Kubernetes",
+      ],
+      jobs: [
+        "Open Positions:",
+        "  → Senior Full-Stack Engineer (Remote)",
+        "  → ML Engineer — LLM Systems (Dubai)",
+        "  → DevOps Lead (London)",
+        "  → Product Designer (Remote)",
+        "  Apply: naumanf25@gmail.com",
+      ],
+      contact: [
+        "━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "  Email : naumanf25@gmail.com",
+        "  Phone : +92 302 646 8105",
+        "  Web   : novatech.vercel.app",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━",
+      ],
       exit: [],
       clear: [],
     };
 
-    setLines(prev => [...prev, `> ${cmd}`]);
-
     if (c === "clear") { setLines(["NovaTech Terminal v2.6.1", ""]); return; }
     if (c === "exit") { onClose(); return; }
+
+    if (c === "admin") {
+      setMode("admin-id");
+      setLines(prev => [
+        ...prev,
+        "  ─────────────────────────────────",
+        "  🔐 ADMIN PANEL — Secure Login",
+        "  ─────────────────────────────────",
+        "  Enter Admin ID:",
+      ]);
+      return;
+    }
+
     if (responses[c]) {
       setLines(prev => [...prev, ...responses[c], ""]);
     } else {
@@ -82,12 +189,25 @@ function Terminal({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && input.trim() && !isLoading) {
+      handleCommand(input);
+      setInput("");
+    }
+  };
+
+  const getPromptLabel = () => {
+    if (mode === "admin-id") return "admin-id❯";
+    if (mode === "admin-pass") return "password❯";
+    return "❯";
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 40, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 40, scale: 0.95 }}
-      className="fixed bottom-8 right-8 w-[480px] max-w-[calc(100vw-2rem)] z-[99992] rounded-2xl overflow-hidden shadow-2xl border border-green-500/30"
+      className="fixed bottom-8 right-8 w-[500px] max-w-[calc(100vw-2rem)] z-[99992] rounded-2xl overflow-hidden shadow-2xl border border-green-500/30"
       style={{ background: "rgba(5,8,22,0.97)" }}
     >
       {/* Title bar */}
@@ -98,37 +218,59 @@ function Terminal({ onClose }: { onClose: () => void }) {
           <div className="w-3 h-3 rounded-full bg-green-500" />
         </div>
         <span className="text-green-400 text-xs font-mono ml-2">novatech — bash — 80×24</span>
+        {mode !== "normal" && (
+          <button
+            onClick={() => { setMode("normal"); setAdminId(""); print("  [cancelled]"); }}
+            className="ml-auto text-xs text-red-400 font-mono hover:text-red-300"
+          >
+            [cancel]
+          </button>
+        )}
       </div>
 
       {/* Output */}
-      <div className="h-64 overflow-y-auto p-4 font-mono text-sm text-green-400 leading-relaxed">
+      <div className="h-72 overflow-y-auto p-4 font-mono text-sm text-green-400 leading-relaxed">
         {lines.map((line, i) => (
-          <div key={i} className={line.startsWith(">") ? "text-cyan-400" : ""}>{line || "\u00A0"}</div>
+          <div
+            key={i}
+            className={
+              line.startsWith(">") ? "text-cyan-400" :
+              line.includes("✅") ? "text-green-300" :
+              line.includes("❌") ? "text-red-400" :
+              line.includes("🔐") ? "text-yellow-400" :
+              line.startsWith("  ━") || line.startsWith("  ─") ? "text-green-700" :
+              ""
+            }
+          >
+            {line || "\u00A0"}
+          </div>
         ))}
+        {isLoading && (
+          <div className="text-yellow-400 animate-pulse">  Verifying credentials...</div>
+        )}
         <div ref={endRef} />
       </div>
 
       {/* Input */}
       <div className="flex items-center gap-2 px-4 py-3 border-t border-green-500/20">
-        <span className="text-green-500 font-mono text-sm">❯</span>
+        <span className="text-green-500 font-mono text-sm whitespace-nowrap">{getPromptLabel()}</span>
         <input
+          ref={inputRef}
           autoFocus
           value={input}
           onChange={e => setInput(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === "Enter" && input.trim()) {
-              handleCommand(input);
-              setInput("");
-            }
-          }}
-          className="flex-1 bg-transparent text-green-400 font-mono text-sm outline-none"
-          placeholder="type a command..."
+          onKeyDown={handleKeyDown}
+          type={mode === "admin-pass" ? "password" : "text"}
+          disabled={isLoading}
+          className="flex-1 bg-transparent text-green-400 font-mono text-sm outline-none disabled:opacity-50"
+          placeholder={isLoading ? "processing..." : "type a command..."}
         />
       </div>
     </motion.div>
   );
 }
 
+// ─── Main EasterEggs Component ───────────────────────────────────────────────
 export default function EasterEggs() {
   const [matrixActive, setMatrixActive] = useState(false);
   const [terminalOpen, setTerminalOpen] = useState(false);
@@ -137,6 +279,10 @@ export default function EasterEggs() {
   const typedTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Skip if user is typing in an input/textarea
+    const tag = (e.target as HTMLElement).tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
     // Konami code check
     konamiProgress.current = [...konamiProgress.current, e.key].slice(-KONAMI.length);
     if (konamiProgress.current.join(",") === KONAMI.join(",")) {
@@ -159,14 +305,13 @@ export default function EasterEggs() {
   }, []);
 
   useEffect(() => {
-    // Dev console greeting
     console.log(
       "%c\n  ███╗   ██╗ ██████╗ ██╗   ██╗ █████╗ ████████╗███████╗ ██████╗██╗  ██╗\n  ████╗  ██║██╔═══██╗██║   ██║██╔══██╗╚══██╔══╝██╔════╝██╔════╝██║  ██║\n  ██╔██╗ ██║██║   ██║██║   ██║███████║   ██║   █████╗  ██║     ███████║\n  ██║╚██╗██║██║   ██║╚██╗ ██╔╝██╔══██║   ██║   ██╔══╝  ██║     ██╔══██║\n  ██║ ╚████║╚██████╔╝ ╚████╔╝ ██║  ██║   ██║   ███████╗╚██████╗██║  ██║\n  ╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝   ╚═╝   ╚══════╝ ╚═════╝╚═╝  ╚═╝\n",
       "color: #38BDF8; font-family: monospace;"
     );
     console.log("%c👋 Hey developer! We see you.", "color: #3B82F6; font-size: 14px; font-weight: bold;");
-    console.log("%c🚀 We're hiring senior engineers. Email: careers@novatech.io", "color: #94A3B8;");
-    console.log("%c🔐 Security bug? security@novatech.io", "color: #94A3B8;");
+    console.log("%c🚀 We're hiring senior engineers. Email: naumanf25@gmail.com", "color: #94A3B8;");
+    console.log("%c🔐 Security bug? naumanf25@gmail.com", "color: #94A3B8;");
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);

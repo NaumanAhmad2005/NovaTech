@@ -3,8 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll } from "framer-motion";
 import Link from "next/link";
-import { Menu, X, ChevronDown, Zap } from "lucide-react";
+import { Menu, X, ChevronDown, Zap, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/lib/ThemeContext";
 
 const navLinks = [
   { label: "Home", href: "#home" },
@@ -42,6 +43,7 @@ export default function Navigation() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const { scrollY } = useScroll();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const unsubscribe = scrollY.on("change", (y) => {
@@ -142,8 +144,30 @@ export default function Navigation() {
             ))}
           </div>
 
-          {/* CTA */}
+          {/* CTA + Theme Toggle */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Theme toggle */}
+            <motion.button
+              onClick={toggleTheme}
+              className="relative w-9 h-9 rounded-lg glass flex items-center justify-center border border-white/10 hover:border-blue-500/30 transition-all"
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
+              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            >
+              <AnimatePresence mode="wait">
+                {theme === 'dark' ? (
+                  <motion.div key="sun" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.25 }}>
+                    <Sun className="w-4 h-4 text-yellow-400" />
+                  </motion.div>
+                ) : (
+                  <motion.div key="moon" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.25 }}>
+                    <Moon className="w-4 h-4 text-blue-500" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
+
             <motion.button
               onClick={() => handleScroll("#contact")}
               className="btn-primary text-sm py-2.5 px-5"
