@@ -1,29 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard,
-  FolderKanban,
-  Users,
-  Briefcase,
-  FileText,
-  CreditCard,
-  Settings,
-  Shield,
-  Bot,
-  Cloud,
-  ChevronLeft,
-  ChevronRight,
-  LifeBuoy,
-  MessageSquare,
-  Activity,
-  LogOut,
-  Zap
+  LayoutDashboard, FolderKanban, Users, Briefcase, FileText,
+  CreditCard, Settings, Shield, Bot, Cloud, ChevronLeft,
+  ChevronRight, LifeBuoy, MessageSquare, Activity, LogOut, Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAdminStore } from "@/lib/adminStore";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -43,118 +29,140 @@ const navigation = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const { sidebarCollapsed, setSidebarCollapsed, mobileMenuOpen, setMobileMenuOpen } = useAdminStore();
 
   return (
-    <motion.aside
-      initial={{ width: 260 }}
-      animate={{ width: collapsed ? 80 : 260 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="h-screen sticky top-0 flex flex-col bg-[#050816] border-r border-white/5 z-40 shrink-0"
-    >
-      {/* Header */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-white/5">
-        <AnimatePresence mode="wait">
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center gap-2 overflow-hidden"
-            >
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                <Zap className="w-4 h-4 text-blue-400" />
-              </div>
-              <span className="font-bold text-white tracking-wide font-mono text-sm whitespace-nowrap">
-                NOVATECH
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
-        >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
-      </div>
+    <>
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 bg-[#02040a]/80 backdrop-blur-sm z-40 md:hidden"
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Navigation */}
-      <div className="flex-1 overflow-y-auto py-6 px-3 scrollbar-hide space-y-1">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return (
-            <Link key={item.name} href={item.href}>
-              <div
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 group relative",
-                  isActive
-                    ? "bg-blue-500/10 text-blue-400"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-                )}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="active-nav"
-                    className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r-full"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  />
-                )}
-                <item.icon className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", isActive && "text-blue-400")} />
-                <AnimatePresence mode="wait">
-                  {!collapsed && (
-                    <motion.span
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: "auto" }}
-                      exit={{ opacity: 0, width: 0 }}
-                      className="text-sm font-medium whitespace-nowrap overflow-hidden"
-                    >
-                      {item.name}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-                
-                {/* Tooltip for collapsed state */}
-                {collapsed && (
-                  <div className="absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-white/10">
-                    {item.name}
-                  </div>
-                )}
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-
-      {/* User Profile */}
-      <div className="p-4 border-t border-white/5">
-        <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors relative group">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 p-[2px] shrink-0">
-            <div className="w-full h-full rounded-full bg-[#050816] flex items-center justify-center border border-transparent">
-              <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-tr from-blue-400 to-cyan-300">NA</span>
-            </div>
-          </div>
+      <motion.aside
+        initial={false}
+        animate={{ 
+          width: sidebarCollapsed ? 80 : 260,
+          x: mobileMenuOpen ? 0 : -260 // Hide off-screen on mobile when closed
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className={cn(
+          "h-screen flex flex-col bg-[#050816] border-r border-white/5 z-50 shrink-0",
+          "fixed md:sticky top-0 left-0",
+          !mobileMenuOpen && "md:translate-x-0" // Ensure it's always visible on desktop
+        )}
+      >
+        {/* Header */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-white/5">
           <AnimatePresence mode="wait">
-            {!collapsed && (
+            {!sidebarCollapsed && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 overflow-hidden"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center gap-2 overflow-hidden"
               >
-                <div className="text-sm font-medium text-white truncate">Nauman</div>
-                <div className="text-xs text-slate-500 truncate">Super Admin</div>
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                  <Zap className="w-4 h-4 text-blue-400" />
+                </div>
+                <span className="font-bold text-white tracking-wide font-mono text-sm whitespace-nowrap">
+                  NOVATECH
+                </span>
               </motion.div>
             )}
           </AnimatePresence>
           
-          <LogOut className={cn("w-4 h-4 text-slate-500 hover:text-red-400 transition-colors shrink-0", collapsed && "hidden")} />
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="hidden md:flex w-8 h-8 rounded-lg items-center justify-center hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
+          >
+            {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </div>
-      </div>
-    </motion.aside>
+
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto py-6 px-3 scrollbar-hide space-y-1">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <Link key={item.name} href={item.href} onClick={() => setMobileMenuOpen(false)}>
+                <div
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 group relative",
+                    isActive
+                      ? "bg-blue-500/10 text-blue-400"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                  )}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="active-nav"
+                      className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r-full"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    />
+                  )}
+                  <item.icon className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", isActive && "text-blue-400")} />
+                  <AnimatePresence mode="wait">
+                    {(!sidebarCollapsed || mobileMenuOpen) && (
+                      <motion.span
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: "auto" }}
+                        exit={{ opacity: 0, width: 0 }}
+                        className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                      >
+                        {item.name}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                  
+                  {/* Tooltip for collapsed state */}
+                  {sidebarCollapsed && !mobileMenuOpen && (
+                    <div className="absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-white/10">
+                      {item.name}
+                    </div>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* User Profile */}
+        <div className="p-4 border-t border-white/5">
+          <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors relative group">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 p-[2px] shrink-0">
+              <div className="w-full h-full rounded-full bg-[#050816] flex items-center justify-center border border-transparent">
+                <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-tr from-blue-400 to-cyan-300">NA</span>
+              </div>
+            </div>
+            <AnimatePresence mode="wait">
+              {(!sidebarCollapsed || mobileMenuOpen) && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex-1 overflow-hidden"
+                >
+                  <div className="text-sm font-medium text-white truncate">Nauman</div>
+                  <div className="text-xs text-slate-500 truncate">Super Admin</div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            <LogOut className={cn("w-4 h-4 text-slate-500 hover:text-red-400 transition-colors shrink-0", (sidebarCollapsed && !mobileMenuOpen) && "hidden")} />
+          </div>
+        </div>
+      </motion.aside>
+    </>
   );
 }
