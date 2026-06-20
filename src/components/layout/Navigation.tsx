@@ -7,6 +7,7 @@ import { Menu, X, ChevronDown, Zap, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/ThemeContext";
 import LoginModal from "@/components/ui/LoginModal";
+import NoProjectModal from "@/components/ui/NoProjectModal";
 
 const navLinks = [
   { label: "Home", href: "#home" },
@@ -40,8 +41,10 @@ export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isNoProjectModalOpen, setIsNoProjectModalOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [hasProject, setHasProject] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { scrollY } = useScroll();
   const { theme, toggleTheme } = useTheme();
@@ -51,6 +54,7 @@ export default function Navigation() {
       // Check for demo cookie first
       if (document.cookie.includes('demo_client_session=true')) {
         setUser({ user_metadata: { full_name: 'Demo User' }, isDemo: true });
+        setHasProject(true);
         return;
       }
 
@@ -60,10 +64,37 @@ export default function Navigation() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
+        
+        try {
+          const { data, error } = await supabase
+            .from('projects')
+            .select('*')
+            .eq('client_id', session.user.id)
+            .limit(1);
+
+          if (!error && data && data.length > 0) {
+            setHasProject(true);
+          } else {
+            setHasProject(false);
+          }
+        } catch (err) {
+          setHasProject(false);
+        }
       }
     };
     checkSession();
   }, []);
+
+  const handlePortalClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (hasProject) {
+      window.location.href = "/portal";
+    } else {
+      setIsNoProjectModalOpen(true);
+      setIsProfileOpen(false);
+      setMobileOpen(false);
+    }
+  };
 
   const handleSignOut = async () => {
     if (user?.isDemo) {
@@ -233,9 +264,9 @@ export default function Navigation() {
                           </p>
                           <p className="text-xs text-slate-400 truncate">{user.email || 'Demo Account'}</p>
                         </div>
-                        <Link href="/portal" className="block w-full text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-blue-500/10 rounded-lg transition-colors">
+                        <button onClick={handlePortalClick} className="block w-full text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-blue-500/10 rounded-lg transition-colors">
                           My Portal
-                        </Link>
+                        </button>
                         <button
                           onClick={handleSignOut}
                           className="w-full text-left px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors mt-1"
@@ -330,13 +361,12 @@ export default function Navigation() {
                       <p className="text-xs text-slate-400 truncate">{user.email || 'Demo Account'}</p>
                     </div>
                   </div>
-                  <Link
-                    href="/portal"
-                    onClick={() => setMobileOpen(false)}
+                  <button
+                    onClick={handlePortalClick}
                     className="w-full flex items-center justify-center text-blue-400 font-medium py-3 bg-blue-500/10 rounded-xl border border-blue-500/20 mt-2"
                   >
                     My Portal
-                  </Link>
+                  </button>
                   <button
                     onClick={handleSignOut}
                     className="w-full text-center text-red-400 font-medium py-3 hover:bg-red-500/10 rounded-xl transition-colors"
@@ -364,6 +394,11 @@ export default function Navigation() {
       </AnimatePresence>
 
       <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+      <NoProjectModal 
+        isOpen={isNoProjectModalOpen} 
+        onClose={() => setIsNoProjectModalOpen(false)} 
+        userName={user?.user_metadata?.full_name?.split(' ')[0] || "Client"}
+      />
     </>
   );
 }
