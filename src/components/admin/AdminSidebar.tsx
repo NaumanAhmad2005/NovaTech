@@ -50,13 +50,13 @@ export default function AdminSidebar() {
         initial={false}
         animate={{ 
           width: sidebarCollapsed ? 80 : 260,
-          x: mobileMenuOpen ? 0 : -260 // Hide off-screen on mobile when closed
         }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className={cn(
           "h-screen flex flex-col bg-[#050816] border-r border-white/5 z-50 shrink-0",
           "fixed md:sticky top-0 left-0",
-          !mobileMenuOpen && "md:translate-x-0" // Ensure it's always visible on desktop
+          "transition-transform duration-300 md:translate-x-0",
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Header */}

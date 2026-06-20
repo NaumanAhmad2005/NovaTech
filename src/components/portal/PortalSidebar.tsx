@@ -48,13 +48,13 @@ export default function PortalSidebar() {
         initial={false}
         animate={{ 
           width: sidebarCollapsed ? 80 : 260,
-          x: mobileMenuOpen ? 0 : -260
         }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className={cn(
           "h-screen flex flex-col bg-[#050816]/95 backdrop-blur-md border-r border-white/5 z-50 shrink-0",
           "fixed md:sticky top-0 left-0",
-          !mobileMenuOpen && "md:translate-x-0"
+          "transition-transform duration-300 md:translate-x-0",
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="h-16 flex items-center justify-between px-4 border-b border-white/5">
