@@ -100,112 +100,115 @@ export default function Navigation() {
             </div>
           </motion.button>
 
-          {/* Desktop Nav */}
-          <div className="hidden xl:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <div
-                key={link.label}
-                className="relative"
-                onMouseEnter={() => link.children && setActiveDropdown(link.label)}
-                onMouseLeave={() => setActiveDropdown(null)}
-              >
-                <motion.button
-                  onClick={() => handleScroll(link.href)}
-                  className="flex items-center gap-1 px-3 py-2 text-sm text-slate-300 hover:text-white transition-colors rounded-lg hover:bg-white/5"
-                  whileHover={{ y: -1 }}
+          {/* Right Side Container */}
+          <div className="flex items-center gap-3 md:gap-6">
+            {/* Desktop Nav */}
+            <div className="hidden xl:flex items-center gap-1">
+              {navLinks.map((link) => (
+                <div
+                  key={link.label}
+                  className="relative"
+                  onMouseEnter={() => link.children && setActiveDropdown(link.label)}
+                  onMouseLeave={() => setActiveDropdown(null)}
                 >
-                  {link.label}
-                  {link.children && <ChevronDown className="w-3 h-3 opacity-60" />}
-                </motion.button>
+                  <motion.button
+                    onClick={() => handleScroll(link.href)}
+                    className="flex items-center gap-1 px-3 py-2 text-sm text-slate-300 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                    whileHover={{ y: -1 }}
+                  >
+                    {link.label}
+                    {link.children && <ChevronDown className="w-3 h-3 opacity-60" />}
+                  </motion.button>
 
-                {/* Dropdown */}
-                <AnimatePresence>
-                  {link.children && activeDropdown === link.label && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 mt-2 w-52 glass-dropdown rounded-xl p-2 shadow-2xl"
-                    >
-                      {link.children.map((child) => (
-                        <button
-                          key={child.label}
-                          onClick={() => handleScroll(child.href)}
-                          className="w-full text-left px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-blue-500/10 rounded-lg transition-all"
-                        >
-                          {child.label}
-                        </button>
-                      ))}
+                  {/* Dropdown */}
+                  <AnimatePresence>
+                    {link.children && activeDropdown === link.label && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute top-full left-0 mt-2 w-52 glass-dropdown rounded-xl p-2 shadow-2xl"
+                      >
+                        {link.children.map((child) => (
+                          <button
+                            key={child.label}
+                            onClick={() => handleScroll(child.href)}
+                            className="w-full text-left px-3 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-blue-500/10 rounded-lg transition-all"
+                          >
+                            {child.label}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA + Theme Toggle */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Theme toggle */}
+              <motion.button
+                onClick={toggleTheme}
+                className="relative w-9 h-9 rounded-lg glass flex items-center justify-center border border-white/10 hover:border-blue-500/30 transition-all"
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
+                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              >
+                <AnimatePresence mode="wait">
+                  {theme === 'dark' ? (
+                    <motion.div key="sun" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.25 }}>
+                      <Sun className="w-4 h-4 text-yellow-400" />
+                    </motion.div>
+                  ) : (
+                    <motion.div key="moon" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.25 }}>
+                      <Moon className="w-4 h-4 text-blue-500" />
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
-            ))}
-          </div>
+              </motion.button>
 
-          {/* CTA + Theme Toggle */}
-          <div className="hidden md:flex items-center gap-3">
-            {/* Theme toggle */}
-            <motion.button
-              onClick={toggleTheme}
-              className="relative w-9 h-9 rounded-lg glass flex items-center justify-center border border-white/10 hover:border-blue-500/30 transition-all"
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.92 }}
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              {/* Client Portal Login Button */}
+              <motion.button
+                onClick={() => setIsLoginOpen(true)}
+                className="hidden sm:block text-sm font-medium text-slate-300 hover:text-white px-3 py-2 transition-colors border border-transparent hover:bg-white/5 rounded-lg"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Client Login
+              </motion.button>
+
+              <motion.button
+                onClick={() => handleScroll("#contact")}
+                className="hidden sm:block btn-primary text-sm py-2.5 px-5"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                Start Your Project
+              </motion.button>
+            </div>
+
+            {/* Mobile Toggle */}
+            <button
+              className="xl:hidden relative w-10 h-10 flex items-center justify-center rounded-lg glass"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label="Toggle navigation"
             >
               <AnimatePresence mode="wait">
-                {theme === 'dark' ? (
-                  <motion.div key="sun" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.25 }}>
-                    <Sun className="w-4 h-4 text-yellow-400" />
+                {mobileOpen ? (
+                  <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
+                    <X className="w-5 h-5" />
                   </motion.div>
                 ) : (
-                  <motion.div key="moon" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.25 }}>
-                    <Moon className="w-4 h-4 text-blue-500" />
+                  <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
+                    <Menu className="w-5 h-5" />
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.button>
-
-            {/* Client Portal Login Button */}
-            <motion.button
-              onClick={() => setIsLoginOpen(true)}
-              className="text-sm font-medium text-slate-300 hover:text-white px-3 py-2 transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Client Login
-            </motion.button>
-
-            <motion.button
-              onClick={() => handleScroll("#contact")}
-              className="btn-primary text-sm py-2.5 px-5"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-            >
-              Start Your Project
-            </motion.button>
+            </button>
           </div>
-
-          {/* Mobile Toggle */}
-          <button
-            className="xl:hidden relative w-10 h-10 flex items-center justify-center rounded-lg glass"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle navigation"
-          >
-            <AnimatePresence mode="wait">
-              {mobileOpen ? (
-                <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
-                  <X className="w-5 h-5" />
-                </motion.div>
-              ) : (
-                <motion.div key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
-                  <Menu className="w-5 h-5" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </button>
         </div>
       </motion.nav>
 
