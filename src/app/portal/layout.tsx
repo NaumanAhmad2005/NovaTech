@@ -13,7 +13,7 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
       <PortalSidebar />
       <div className="flex flex-col flex-1 min-w-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/5 via-[#050816] to-[#050816]">
         <PortalTopbar />
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
           <div className="max-w-[1400px] mx-auto w-full">
             {children}
           </div>
