@@ -22,6 +22,7 @@
 ![Three.js](https://img.shields.io/badge/Three.js-black?style=for-the-badge&logo=three.js)
 ![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=for-the-badge&logo=framer)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-v4-38BDF8?style=for-the-badge&logo=tailwindcss)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 
 <br />
 
@@ -31,20 +32,75 @@
 
 ## ✨ Overview
 
-**NovaTech** is a fully-featured, production-ready corporate website built to enterprise standards. Every section is handcrafted with premium animations, 3D visuals, glassmorphism, and cinematic scroll effects.
+**NovaTech** is a fully-featured, production-ready corporate website built to enterprise standards. Every section is handcrafted with premium animations, 3D visuals, glassmorphism, and cinematic scroll effects. The site includes real backend integrations: WhatsApp lead notifications and a Supabase-backed newsletter subscriber database.
 
 > **Design Philosophy:** Minimal. Professional. Dark. Elegant.  
 > **Goal:** "This company builds enterprise-grade software."
 
 ---
 
-## 🚀 Live Preview
+## 🚀 Quick Start
 
-```
-http://localhost:3000
+```bash
+# Clone the repository
+git clone https://github.com/NaumanAhmad2005/NovaTech.git
+cd NovaTech/novatech
+
+# Install dependencies
+npm install
+
+# Copy environment variables and fill in your keys (see Environment Setup below)
+cp .env.example .env.local
+
+# Start development server
+npm run dev
 ```
 
-> Run `npm run dev` inside the `novatech/` directory to start.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Scripts
+
+```bash
+npm run dev       # Start dev server (Turbopack)
+npm run build     # Production build
+npm run start     # Start production server
+npm run lint      # ESLint check
+npx tsc --noEmit  # TypeScript type check
+```
+
+---
+
+## 🔧 Environment Setup
+
+Create a `.env.local` file in the `novatech/` directory with the following keys:
+
+```env
+# ── WhatsApp Notifications (CallMeBot — Free) ──────────────────────────────
+# Setup: Send "I allow callmebot to send me messages" to +34 644 597 91 on WhatsApp.
+# They reply with your personal API key.
+WHATSAPP_PHONE=923026468105
+WHATSAPP_APIKEY=your_callmebot_apikey_here
+
+# ── Supabase (Newsletter Subscriber Database) ───────────────────────────────
+# Create a free project at https://supabase.com
+# Get these from: Project Settings → API
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+```
+
+> ⚠️ **Never commit `.env.local` to Git** — it is already listed in `.gitignore`.
+
+### Supabase Table Setup
+
+Run this SQL once in the Supabase SQL Editor:
+
+```sql
+create table newsletter_subscribers (
+  id uuid default gen_random_uuid() primary key,
+  email text unique not null,
+  subscribed_at timestamptz default now()
+);
+```
 
 ---
 
@@ -79,7 +135,8 @@ http://localhost:3000
 | **3D Graphics** | Three.js + React Three Fiber + Drei |
 | **Smooth Scroll** | Lenis |
 | **Icons** | Lucide React |
-| **UI Primitives** | Radix UI |
+| **Database** | Supabase (PostgreSQL) |
+| **Notifications** | CallMeBot WhatsApp API |
 
 ---
 
@@ -89,14 +146,17 @@ http://localhost:3000
 novatech/
 ├── src/
 │   ├── app/
-│   │   ├── globals.css          # Design tokens, animations, glass effects
-│   │   ├── layout.tsx           # Root layout with SEO metadata
-│   │   └── page.tsx             # Main page — assembles all sections
+│   │   ├── api/
+│   │   │   ├── contact/route.ts     # WhatsApp notification + server validation
+│   │   │   └── newsletter/route.ts  # Supabase email storage
+│   │   ├── globals.css              # Design tokens, glass effects, security CSS
+│   │   ├── layout.tsx               # Root layout with SEO metadata
+│   │   └── page.tsx                 # Main page — assembles all sections
 │   │
 │   ├── components/
 │   │   ├── layout/
-│   │   │   ├── Navigation.tsx   # Sticky glass navbar with dropdowns
-│   │   │   └── Footer.tsx       # Full footer with CTA, newsletter, links
+│   │   │   ├── Navigation.tsx       # Sticky glass navbar with solid dropdowns
+│   │   │   └── Footer.tsx           # Full footer with CTA, newsletter, links
 │   │   │
 │   │   ├── sections/
 │   │   │   ├── HeroSection.tsx          # Globe, code snippets, parallax hero
@@ -110,27 +170,27 @@ novatech/
 │   │   │   ├── TestimonialsSection.tsx  # Client carousel
 │   │   │   ├── PricingSection.tsx       # 3-tier engagement models
 │   │   │   ├── BlogSection.tsx          # Engineering blog grid
-│   │   │   └── ContactSection.tsx       # Form + offices + trust signals
+│   │   │   └── ContactSection.tsx       # Validated form + contact info
 │   │   │
 │   │   ├── three/
-│   │   │   └── HeroGlobe.tsx    # Interactive Three.js globe
+│   │   │   └── HeroGlobe.tsx        # Interactive Three.js globe
 │   │   │
 │   │   └── ui/
-│   │       ├── CustomCursor.tsx    # Magnetic dual-ring cursor
-│   │       ├── EasterEggs.tsx      # Konami code, terminal, console art
-│   │       ├── LoadingScreen.tsx   # Animated loading with progress bar
-│   │       ├── NoiseOverlay.tsx    # Film grain texture
-│   │       ├── ScrollProgress.tsx  # Top progress bar
-│   │       └── SmoothScroll.tsx    # Lenis wrapper
+│   │       ├── EasterEggs.tsx       # Konami code, terminal, console art
+│   │       ├── LoadingScreen.tsx    # Animated loading with progress bar
+│   │       ├── NoiseOverlay.tsx     # Film grain texture
+│   │       ├── ScrollProgress.tsx   # Top progress bar
+│   │       └── SmoothScroll.tsx     # Lenis wrapper
 │   │
 │   └── lib/
-│       └── utils.ts             # cn() class merger utility
+│       ├── utils.ts                 # cn() class merger utility
+│       └── validators.ts            # Shared input validators & XSS sanitizers
 │
-├── public/                      # Static assets
+├── public/                          # Static assets
+├── .env.local                       # Secret keys (NOT committed to Git)
 ├── .gitignore
-├── next.config.ts
+├── next.config.ts                   # Security headers + build config
 ├── package.json
-├── postcss.config.mjs
 └── tsconfig.json
 ```
 
@@ -144,10 +204,9 @@ novatech/
 - 💡 Neon blue/cyan glow effects on hover
 - 🌈 Gradient text headings (Space Grotesk)
 - 🔲 Subtle grid & dot pattern overlays
-- 📡 Animated diagonal light beams in hero
+- 🧭 Solid, highly-readable navigation dropdowns (`glass-dropdown` class)
 
 ### Animations & Interactions
-- 🖱️ **Custom cursor** — dot + magnetic trailing ring
 - 🎬 **Loading screen** — rotating hexagonal logo + progress bar
 - 📏 **Scroll progress bar** at top of viewport
 - 🌊 **Lenis smooth scroll** — buttery fluid scrolling
@@ -160,6 +219,28 @@ novatech/
 - ⭐ **Star field** — deep space particle background in hero
 - 🧠 **Neural network** — animated node graph in AI section
 - ✨ **Particle cloud** — slowly rotating particles
+
+### Backend Integrations
+- 📲 **WhatsApp Alerts** — Contact form submissions are instantly delivered to your WhatsApp DM via [CallMeBot API](https://www.callmebot.com/) (free, no account required)
+- 🗄️ **Newsletter Database** — Subscriber emails are stored in a [Supabase](https://supabase.com) PostgreSQL table with duplicate prevention (`upsert`)
+- 🔁 **API Routes** — Two dedicated Next.js API routes handle all backend logic server-side
+
+### 🔒 Security
+- 🛡️ **XSS Prevention** — all user inputs stripped of HTML tags, JS protocols, and event handlers before processing
+- 🚦 **Rate Limiting** — contact form: 3 requests per IP per 10 min; newsletter: 5 per IP per hour
+- ✅ **Server-side Validation** — all fields re-validated on the server regardless of frontend state
+- 🔐 **HTTP Security Headers** — `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-XSS-Protection`
+- 📋 **Whitelist Validation** — dropdown values (service, budget) validated against an allowed-values list
+
+### Form Validation (Contact Page)
+| Field | Rule |
+|-------|------|
+| Full Name | Letters, spaces, hyphens, apostrophes — 2 to 60 characters |
+| Email | Valid RFC-5322 format — max 254 characters |
+| Phone | Digits, `+`, `-`, spaces, parentheses — 7 to 15 digits (ITU E.164) — optional |
+| Company | Letters, digits, common symbols — max 100 characters — optional |
+| Message | Min 10 characters, max 5000 characters with live counter |
+| Dropdowns | Whitelist-checked against allowed values on both client and server |
 
 ### Sections (13 total)
 | # | Section | Description |
@@ -175,8 +256,8 @@ novatech/
 | 9 | Testimonials | Sliding carousel with 5 enterprise clients |
 | 10 | Pricing | Starter / Professional / Enterprise tiers |
 | 11 | Blog | 6 deep-dive technical articles |
-| 12 | Contact | Form + 4 office locations + trust signals |
-| 13 | Footer | CTA banner + newsletter + links |
+| 12 | Contact | Validated form + direct contact info + trust signals |
+| 13 | Footer | CTA banner + live newsletter signup + links |
 
 ### 🥚 Easter Eggs
 | Trigger | Effect |
@@ -190,42 +271,9 @@ novatech/
 - ✅ Semantic HTML5 throughout
 - ✅ `next/dynamic` for Three.js chunks (code splitting)
 - ✅ Lazy-loaded 3D canvases with SSR disabled
-- ✅ Optimized font loading via Google Fonts
-- ✅ Zero TypeScript errors
-
----
-
-## ⚙️ Getting Started
-
-### Prerequisites
-- Node.js `>=18.0.0`
-- npm `>=9.0.0`
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/NaumanAhmad2005/NovaTech.git
-cd NovaTech/novatech
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### Scripts
-
-```bash
-npm run dev       # Start dev server (Turbopack)
-npm run build     # Production build
-npm run start     # Start production server
-npm run lint      # ESLint check
-npx tsc --noEmit  # TypeScript type check
-```
+- ✅ Static page prerendering (`○` routes)
+- ✅ Firefox & Chrome cross-browser compatible (SVG filter freeze fixed)
+- ✅ Zero TypeScript errors on production build
 
 ---
 
@@ -233,9 +281,9 @@ npx tsc --noEmit  # TypeScript type check
 
 - [ ] Client Portal — project tracking dashboard
 - [ ] Admin Dashboard — internal project management
+- [ ] Email delivery via Resend/Sendgrid for newsletter subscribers
 - [ ] Project Proposal Generator
 - [ ] Developer Blog CMS integration
-- [ ] API Documentation site
 - [ ] Dark/Light mode toggle
 - [ ] i18n (Arabic, French support)
 - [ ] Careers page with application form
