@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Zap, Globe2, ArrowRight, GitBranch, ExternalLink, MessageSquare } from "lucide-react";
 
@@ -18,6 +19,27 @@ const socials = [
 ];
 
 export default function Footer() {
+  const [email, setEmail] = useState("");
+  const [subState, setSubState] = useState<"idle" | "loading" | "done" | "error">("idle");
+
+  const handleSubscribe = async () => {
+    if (!email || subState === "loading") return;
+    setSubState("loading");
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) throw new Error();
+      setSubState("done");
+      setEmail("");
+    } catch {
+      setSubState("error");
+      setTimeout(() => setSubState("idle"), 3000);
+    }
+  };
+
   return (
     <footer className="relative pt-20 pb-8 border-t border-blue-500/10" style={{ background: "#050816" }}>
       <div className="absolute inset-0 grid-pattern opacity-15" />
@@ -82,19 +104,31 @@ export default function Footer() {
             {/* Newsletter */}
             <div>
               <p className="text-xs text-slate-500 font-mono tracking-wider mb-3">STAY UPDATED</p>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors"
-                />
-                <motion.button
-                  className="px-3 py-2 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-400 hover:bg-blue-500/30 transition-colors"
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <ArrowRight className="w-4 h-4" />
-                </motion.button>
-              </div>
+              {subState === "done" ? (
+                <p className="text-green-400 text-sm font-medium">✓ You're subscribed!</p>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && handleSubscribe()}
+                    placeholder="your@email.com"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors"
+                  />
+                  <motion.button
+                    onClick={handleSubscribe}
+                    disabled={subState === "loading"}
+                    className="px-3 py-2 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-400 hover:bg-blue-500/30 transition-colors disabled:opacity-50"
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.button>
+                </div>
+              )}
+              {subState === "error" && (
+                <p className="text-red-400 text-xs mt-1">Something went wrong. Try again.</p>
+              )}
             </div>
 
             {/* Socials */}

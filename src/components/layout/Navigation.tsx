@@ -124,7 +124,7 @@ export default function Navigation() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 8, scale: 0.96 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 mt-2 w-52 glass rounded-xl p-2 border border-blue-500/10 shadow-2xl"
+                      className="absolute top-full left-0 mt-2 w-52 glass-dropdown rounded-xl p-2 shadow-2xl"
                     >
                       {link.children.map((child) => (
                         <button
