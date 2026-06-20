@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Menu, X, ChevronDown, Zap, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/ThemeContext";
+import LoginModal from "@/components/ui/LoginModal";
 
 const navLinks = [
   { label: "Home", href: "#home" },
@@ -13,9 +14,7 @@ const navLinks = [
     label: "Services", href: "#services",
     children: [
       { label: "Custom Software", href: "#services" },
-      { label: "Web Applications", href: "#services" },
-      { label: "Mobile Apps", href: "#services" },
-      { label: "AI Integration", href: "#ai" },
+      { label: "AI Solutions", href: "#services" },
       { label: "Cloud Solutions", href: "#services" },
       { label: "Cybersecurity", href: "#services" },
     ]
@@ -41,6 +40,7 @@ const navLinks = [
 export default function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const { scrollY } = useScroll();
   const { theme, toggleTheme } = useTheme();
@@ -234,6 +234,8 @@ export default function Navigation() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </>
   );
 }
