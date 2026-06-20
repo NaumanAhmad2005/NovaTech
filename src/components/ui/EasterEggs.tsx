@@ -83,10 +83,14 @@ function Terminal({ onClose }: { onClose: () => void }) {
         print(
           "  ✅ Access Granted.",
           "  ─────────────────────────────────",
-          "  Admin Panel is under construction.",
-          "  Check back soon, operator.",
+          "  Initializing Enterprise Portal...",
+          "  Opening in a new tab.",
           "  ─────────────────────────────────",
         );
+        setTimeout(() => {
+          window.open("/admin", "_blank");
+          onClose(); // Optional: close terminal after successful login
+        }, 1000);
       } else {
         print(`  ❌ ${data.error ?? "Invalid credentials."}`);
       }
