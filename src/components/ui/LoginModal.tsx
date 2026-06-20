@@ -58,8 +58,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           password
         });
         if (error) throw error;
-        // On success, redirect to portal
-        window.location.href = "/portal";
+        // On success, simply reload to update the UI
+        window.location.reload();
       }
     } catch (error: any) {
       console.error('Error with email auth:', error);
@@ -74,9 +74,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setErrorMsg(null);
 
     if (provider === 'demo') {
-      // Set a dummy cookie and hard redirect to portal
+      // Set a dummy cookie and just reload the page to update the navbar UI
       document.cookie = "demo_client_session=true; path=/; max-age=86400";
-      window.location.href = "/portal";
+      window.location.reload();
       return;
     }
 

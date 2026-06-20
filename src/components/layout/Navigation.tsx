@@ -41,8 +41,41 @@ export default function Navigation() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { scrollY } = useScroll();
   const { theme, toggleTheme } = useTheme();
+  
+  useEffect(() => {
+    const checkSession = async () => {
+      // Check for demo cookie first
+      if (document.cookie.includes('demo_client_session=true')) {
+        setUser({ user_metadata: { full_name: 'Demo User' }, isDemo: true });
+        return;
+      }
+
+      // Check real Supabase session
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+      }
+    };
+    checkSession();
+  }, []);
+
+  const handleSignOut = async () => {
+    if (user?.isDemo) {
+      document.cookie = 'demo_client_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      window.location.reload();
+      return;
+    }
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.reload();
+  };
 
   useEffect(() => {
     const unsubscribe = scrollY.on("change", (y) => {
@@ -169,15 +202,60 @@ export default function Navigation() {
                 </AnimatePresence>
               </motion.button>
 
-              {/* Login Button */}
-              <motion.button
-                onClick={() => setIsLoginOpen(true)}
-                className="hidden sm:flex items-center justify-center text-sm font-medium text-white px-5 py-2.5 transition-all bg-white/5 hover:bg-blue-500/10 border border-white/10 hover:border-blue-500/30 rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                Login
-              </motion.button>
+              {/* Login / Profile Button */}
+              {user ? (
+                <div className="relative hidden sm:block">
+                  <motion.button
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/30 overflow-hidden"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {user.user_metadata?.avatar_url ? (
+                      <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-blue-400 font-bold text-sm">
+                        {user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                      </span>
+                    )}
+                  </motion.button>
+                  <AnimatePresence>
+                    {isProfileOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute top-full right-0 mt-2 w-48 glass-dropdown rounded-xl p-2 shadow-2xl z-50 border border-white/10 bg-[#0a0f1c]"
+                      >
+                        <div className="px-3 py-2 border-b border-white/10 mb-2">
+                          <p className="text-sm font-medium text-white truncate">
+                            {user.user_metadata?.full_name || 'Client'}
+                          </p>
+                          <p className="text-xs text-slate-400 truncate">{user.email || 'Demo Account'}</p>
+                        </div>
+                        <Link href="/portal" className="block w-full text-left px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-blue-500/10 rounded-lg transition-colors">
+                          My Portal
+                        </Link>
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full text-left px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors mt-1"
+                        >
+                          Sign Out
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <motion.button
+                  onClick={() => setIsLoginOpen(true)}
+                  className="hidden sm:flex items-center justify-center text-sm font-medium text-white px-5 py-2.5 transition-all bg-white/5 hover:bg-blue-500/10 border border-white/10 hover:border-blue-500/30 rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  Login
+                </motion.button>
+              )}
 
               <motion.button
                 onClick={() => handleScroll("#contact")}
@@ -235,12 +313,45 @@ export default function Navigation() {
                 </motion.button>
               ))}
               <hr className="border-white/10 my-4" />
-              <button
-                onClick={() => { setMobileOpen(false); setIsLoginOpen(true); }}
-                className="w-full flex items-center justify-center text-blue-400 font-medium py-3 bg-blue-500/10 rounded-xl border border-blue-500/20"
-              >
-                Login
-              </button>
+              {user ? (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl border border-white/10">
+                    <div className="w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center overflow-hidden">
+                      {user.user_metadata?.avatar_url ? (
+                        <img src={user.user_metadata.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-blue-400 font-bold text-sm">
+                          {user.user_metadata?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-sm font-medium text-white truncate">{user.user_metadata?.full_name || 'Client'}</p>
+                      <p className="text-xs text-slate-400 truncate">{user.email || 'Demo Account'}</p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/portal"
+                    onClick={() => setMobileOpen(false)}
+                    className="w-full flex items-center justify-center text-blue-400 font-medium py-3 bg-blue-500/10 rounded-xl border border-blue-500/20 mt-2"
+                  >
+                    My Portal
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full text-center text-red-400 font-medium py-3 hover:bg-red-500/10 rounded-xl transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setMobileOpen(false); setIsLoginOpen(true); }}
+                  className="w-full flex items-center justify-center text-blue-400 font-medium py-3 bg-blue-500/10 rounded-xl border border-blue-500/20"
+                >
+                  Login
+                </button>
+              )}
               <button
                 onClick={() => handleScroll("#contact")}
                 className="btn-primary w-full py-4 text-lg mt-2"

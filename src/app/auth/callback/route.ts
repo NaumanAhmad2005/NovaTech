@@ -32,13 +32,7 @@ export async function GET(request: Request) {
       // Check if user has portal access
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
-        // Fetch user profile from your custom table (you'd need to create this in Supabase)
-        // e.g., client_profiles
-        // For now, redirect everyone to /portal, or just /
-        // Based on instructions: "if a new user loged in, he will remain in the main website page"
-        // And "The admin will assign which email or user will have its own portal"
-        // Let's redirect to /auth/redirect (we'll build it) so we can do client-side checks and show a nice UI.
-        return NextResponse.redirect(`${origin}/auth/redirect`)
+        return NextResponse.redirect(`${origin}/`);
       }
     }
   }
