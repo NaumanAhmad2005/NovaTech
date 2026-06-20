@@ -12,10 +12,20 @@ interface LoginModalProps {
 
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const supabase = createClient();
 
-  const handleOAuthLogin = async (provider: 'google' | 'apple' | 'facebook') => {
+  const handleOAuthLogin = async (provider: 'google' | 'apple' | 'facebook' | 'demo') => {
     setLoadingProvider(provider);
+    setErrorMsg(null);
+
+    if (provider === 'demo') {
+      // Set a dummy cookie and hard redirect to portal
+      document.cookie = "demo_client_session=true; path=/; max-age=86400";
+      window.location.href = "/portal";
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -23,9 +33,15 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-      if (error) throw error;
-    } catch (error) {
+      if (error) {
+        if (error.message.includes('not enabled') || error.message.includes('URL and API key')) {
+          throw new Error("OAuth is not yet configured on your Supabase backend.");
+        }
+        throw error;
+      }
+    } catch (error: any) {
       console.error('Error logging in:', error);
+      setErrorMsg(error.message || "Failed to authenticate. Please check configuration.");
       setLoadingProvider(null);
     }
   };
@@ -123,7 +139,19 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 </button>
               </div>
 
-              <div className="mt-8 text-center">
+              {errorMsg && (
+                <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-center">
+                  <p className="text-red-400 text-xs">{errorMsg}</p>
+                </div>
+              )}
+
+              <div className="mt-8 text-center space-y-4">
+                <button
+                  onClick={() => handleOAuthLogin('demo')}
+                  className="text-xs font-medium text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors"
+                >
+                  Skip authentication & use Demo Login
+                </button>
                 <p className="text-xs text-slate-500">
                   By signing in, you agree to NovaTech's Terms of Service and Privacy Policy.
                 </p>

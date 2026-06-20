@@ -68,6 +68,11 @@ export async function middleware(request: NextRequest) {
       }
     )
 
+    const demoSession = request.cookies.get('demo_client_session')
+    if (demoSession) {
+      return response
+    }
+
     const { data: { session } } = await supabase.auth.getSession()
 
     if (!session) {

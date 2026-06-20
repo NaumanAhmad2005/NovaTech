@@ -34,7 +34,6 @@ const navLinks = [
   { label: "Process", href: "#process" },
   { label: "About", href: "#about" },
   { label: "Insights", href: "#insights" },
-  { label: "Careers", href: "#careers" },
 ];
 
 export default function Navigation() {
@@ -170,14 +169,14 @@ export default function Navigation() {
                 </AnimatePresence>
               </motion.button>
 
-              {/* Client Portal Login Button */}
+              {/* Login Button */}
               <motion.button
                 onClick={() => setIsLoginOpen(true)}
-                className="hidden sm:block text-sm font-medium text-slate-300 hover:text-white px-3 py-2 transition-colors border border-transparent hover:bg-white/5 rounded-lg"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="hidden sm:flex items-center justify-center text-sm font-medium text-white px-5 py-2.5 transition-all bg-white/5 hover:bg-blue-500/10 border border-white/10 hover:border-blue-500/30 rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
-                Client Login
+                Login
               </motion.button>
 
               <motion.button
@@ -235,11 +234,16 @@ export default function Navigation() {
                   {link.label}
                 </motion.button>
               ))}
-            </div>
-            <div className="mt-8">
+              <hr className="border-white/10 my-4" />
+              <button
+                onClick={() => { setMobileOpen(false); setIsLoginOpen(true); }}
+                className="w-full flex items-center justify-center text-blue-400 font-medium py-3 bg-blue-500/10 rounded-xl border border-blue-500/20"
+              >
+                Login
+              </button>
               <button
                 onClick={() => handleScroll("#contact")}
-                className="btn-primary w-full text-center"
+                className="btn-primary w-full py-4 text-lg mt-2"
               >
                 Start Your Project
               </button>
