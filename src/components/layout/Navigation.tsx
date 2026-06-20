@@ -168,6 +168,16 @@ export default function Navigation() {
               </AnimatePresence>
             </motion.button>
 
+            {/* Client Portal Login Button */}
+            <motion.button
+              onClick={() => setIsLoginOpen(true)}
+              className="text-sm font-medium text-slate-300 hover:text-white px-3 py-2 transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Client Login
+            </motion.button>
+
             <motion.button
               onClick={() => handleScroll("#contact")}
               className="btn-primary text-sm py-2.5 px-5"

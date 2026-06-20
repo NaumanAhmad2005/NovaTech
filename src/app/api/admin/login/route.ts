@@ -69,5 +69,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: "Invalid credentials." }, { status: 401 });
   }
 
-  return NextResponse.json({ success: true, message: "Access granted. Admin panel coming soon." });
+  const response = NextResponse.json({ success: true, message: "Access granted." });
+  
+  // Set an HTTP-only secure cookie for admin access
+  response.cookies.set("admin_session", data.id, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24, // 24 hours
+  });
+
+  return response;
 }
