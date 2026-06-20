@@ -1,12 +1,101 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { 
   CheckCircle2, Clock, Calendar, MessageSquare, 
-  FileText, Activity, AlertCircle, ArrowUpRight, Play, CheckCircle, ChevronRight
+  FileText, Activity, AlertCircle, ArrowUpRight, Play, CheckCircle, ChevronRight,
+  Rocket
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function PortalDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [hasProject, setHasProject] = useState(false);
+  const [userName, setUserName] = useState("Client");
+  const supabase = createClient();
+
+  useEffect(() => {
+    const checkProjectStatus = async () => {
+      try {
+        // If demo mode, they have a project
+        if (document.cookie.includes('demo_client_session=true')) {
+          setHasProject(true);
+          setUserName("Demo User");
+          setLoading(false);
+          return;
+        }
+
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUserName(session.user.user_metadata?.full_name?.split(' ')[0] || "Client");
+          
+          // Try to fetch projects for this user
+          // NOTE: This assumes a 'projects' table exists. 
+          // If it fails, it gracefully falls back to empty state.
+          const { data, error } = await supabase
+            .from('projects')
+            .select('*')
+            .eq('client_id', session.user.id)
+            .limit(1);
+
+          if (!error && data && data.length > 0) {
+            setHasProject(true);
+          } else {
+            setHasProject(false);
+          }
+        }
+      } catch (err) {
+        console.error("Error checking project:", err);
+        setHasProject(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkProjectStatus();
+  }, [supabase]);
+
+  if (loading) {
+    return (
+      <div className="h-[60vh] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // EMPTY STATE: No project assigned yet
+  if (!hasProject) {
+    return (
+      <div className="h-[80vh] flex flex-col items-center justify-center max-w-2xl mx-auto text-center px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          className="p-8 rounded-3xl bg-[#111827] border border-white/10 shadow-2xl relative overflow-hidden w-full"
+        >
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[200px] bg-blue-500/10 blur-[80px] rounded-full pointer-events-none" />
+          
+          <div className="w-20 h-20 mx-auto rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-6 text-blue-400">
+            <Rocket className="w-10 h-10" />
+          </div>
+          
+          <h1 className="text-3xl font-bold text-white mb-4">Welcome to NovaTech, {userName}!</h1>
+          <p className="text-slate-400 text-lg mb-8 leading-relaxed">
+            You haven't started any project yet. Let's build something extraordinary together.
+          </p>
+          
+          <Link 
+            href="/#contact"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-xl font-medium transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] border border-blue-500/50"
+          >
+            Start Your Project <ArrowUpRight className="w-5 h-5" />
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 pb-10">
       {/* Greeting & Header */}
