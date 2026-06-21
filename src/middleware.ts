@@ -4,6 +4,13 @@ import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
   // 1. Protect Admin Routes
+  // Intercept Admin Logout
+  if (request.nextUrl.pathname === '/admin/logout') {
+    const response = NextResponse.redirect(new URL('/', request.url))
+    response.cookies.delete('admin_session')
+    return response
+  }
+
   // We check if the path starts with /admin, but EXCLUDE /admin/login
   if (request.nextUrl.pathname.startsWith('/admin') && request.nextUrl.pathname !== '/admin/login') {
     const adminSession = request.cookies.get('admin_session')

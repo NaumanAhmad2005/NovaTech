@@ -31,9 +31,8 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const { sidebarCollapsed, setSidebarCollapsed, mobileMenuOpen, setMobileMenuOpen } = useAdminStore();
 
-  const handleLogout = () => {
-    document.cookie = 'admin_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    window.location.href = '/';
+  const handleLogout = async () => {
+    window.location.href = '/admin/logout';
   };
 
   return (
