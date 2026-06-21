@@ -4,7 +4,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   FolderKanban, Plus, Search, MoreHorizontal, Users,
-  Calendar, Activity, CheckCircle2, Circle, PlayCircle, PauseCircle
+  Calendar, Activity, CheckCircle2, Circle, PlayCircle, PauseCircle,
+  X, Save
 } from "lucide-react";
 
 type ProjectStatus = "active" | "completed" | "paused" | "cancelled";
@@ -43,6 +44,8 @@ export default function AdminProjectsPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<ProjectStatus | "all">("all");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [showNewModal, setShowNewModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState<Project | null>(null);
 
   const filtered = projects.filter(p => {
     const matchSearch = !search || [p.title, p.client].some(v => v.toLowerCase().includes(search.toLowerCase()));
@@ -58,7 +61,10 @@ export default function AdminProjectsPage() {
           <h1 className="text-2xl font-bold text-white font-mono tracking-tight">Projects</h1>
           <p className="text-slate-400 text-sm mt-1">Manage all active and completed client projects.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors">
+        <button 
+          onClick={() => setShowNewModal(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
+        >
           <Plus className="w-4 h-4" /> New Project
         </button>
       </div>
@@ -150,12 +156,105 @@ export default function AdminProjectsPage() {
                     <MoreHorizontal className="w-3 h-3 text-slate-400" />
                   </div>
                 </div>
-                <button className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors">View Details →</button>
+                <button 
+                  onClick={() => setShowDetailsModal(project)}
+                  className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                >
+                  View Details →
+                </button>
               </div>
             </motion.div>
           );
         })}
       </div>
+
+      {/* New Project Modal */}
+      {showNewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-[#0F172A] border border-white/10 rounded-2xl w-full max-w-lg p-6 relative">
+            <button onClick={() => setShowNewModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold text-white mb-6">Create New Project</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Project Title</label>
+                <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. Acme ERP System" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Client Name</label>
+                <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="John Doe" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Duration</label>
+                  <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. 6 Months" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Total Sprints</label>
+                  <input type="number" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="12" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Price / Budget</label>
+                <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="$50,000" />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setShowNewModal(false)} className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-colors">Cancel</button>
+              <button onClick={() => setShowNewModal(false)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors">
+                <Save className="w-4 h-4" /> Save Project
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Details Modal */}
+      {showDetailsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-[#0F172A] border border-white/10 rounded-2xl w-full max-w-lg p-6 relative">
+            <button onClick={() => setShowDetailsModal(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold text-white mb-2">{showDetailsModal.title}</h2>
+            <p className="text-sm text-slate-400 flex items-center gap-2 mb-6"><Users className="w-4 h-4" /> {showDetailsModal.client}</p>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                <span className="text-sm text-slate-400">Status</span>
+                <span className={`text-sm font-medium capitalize ${STATUS_CONFIG[showDetailsModal.status].color}`}>{showDetailsModal.status}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                <span className="text-sm text-slate-400">Current Phase</span>
+                <span className="text-sm font-medium text-white">{showDetailsModal.phase}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                <span className="text-sm text-slate-400">Progress</span>
+                <span className="text-sm font-medium text-white">{showDetailsModal.progress}%</span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+                <span className="text-sm text-slate-400">Budget</span>
+                <span className="text-sm font-mono text-green-400">{showDetailsModal.budget}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                  <span className="text-xs text-slate-400 block mb-1">Start Date</span>
+                  <span className="text-sm font-medium text-white">{new Date(showDetailsModal.start_date).toLocaleDateString()}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                  <span className="text-xs text-slate-400 block mb-1">Est. Delivery</span>
+                  <span className="text-sm font-medium text-white">{new Date(showDetailsModal.estimated_delivery).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 pt-4 border-t border-white/5 flex justify-end">
+              <button onClick={() => setShowDetailsModal(null)} className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-colors">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

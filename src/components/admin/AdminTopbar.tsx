@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { Bell, Search, Command, Settings, Menu } from "lucide-react";
+import Link from "next/link";
 import { useTheme } from "@/lib/ThemeContext";
 import { useAdminStore } from "@/lib/adminStore";
 
 export default function AdminTopbar() {
   const { theme, toggleTheme } = useTheme();
   const { setMobileMenuOpen } = useAdminStore();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   return (
     <header className="h-16 px-4 md:px-6 flex items-center justify-between border-b border-white/5 bg-[#050816]/80 backdrop-blur-md sticky top-0 z-30">
@@ -46,15 +49,38 @@ export default function AdminTopbar() {
         <div className="h-6 w-px bg-white/10 mx-2" />
 
         {/* Notifications */}
-        <button className="relative w-9 h-9 rounded-full hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 border-2 border-[#050816]" />
-        </button>
+        <div className="relative">
+          <button 
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative w-9 h-9 rounded-full hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+          >
+            <Bell className="w-5 h-5" />
+            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 border-2 border-[#050816]" />
+          </button>
+          
+          {showNotifications && (
+            <div className="absolute right-0 mt-2 w-64 p-4 rounded-xl bg-[#0F172A] border border-white/10 shadow-xl z-50">
+              <h3 className="text-sm font-semibold text-white mb-2">Notifications</h3>
+              <div className="space-y-3">
+                <div className="text-xs text-slate-300">
+                  <p className="font-medium text-white">New user signed up</p>
+                  <p className="text-slate-500">2 mins ago</p>
+                </div>
+                <div className="text-xs text-slate-300">
+                  <p className="font-medium text-white">Project deployed</p>
+                  <p className="text-slate-500">1 hour ago</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
-        {/* User Dropdown Placeholder */}
-        <button className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-colors">
-          <Settings className="w-4 h-4 text-slate-400" />
-        </button>
+        {/* User Dropdown / Settings */}
+        <Link href="/admin/settings">
+          <button className="w-9 h-9 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-colors">
+            <Settings className="w-4 h-4 text-slate-400" />
+          </button>
+        </Link>
       </div>
     </header>
   );

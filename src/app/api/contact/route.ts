@@ -10,6 +10,7 @@ import {
   validateService,
   validateBudget,
 } from "@/lib/validators";
+import { addDemoRequest } from "@/lib/demoDb";
 
 // ─── Supabase admin client (service role bypasses RLS) ────────────────────────
 const supabaseAdmin = createClient(
@@ -102,10 +103,27 @@ export async function POST(req: NextRequest) {
           description: raw.message,
           status: "pending",
         });
-      if (dbError) console.error("Supabase insert error:", dbError.message);
+      if (dbError) {
+        console.error("Supabase insert error:", dbError.message);
+        addDemoRequest({ user_id: userId || null, full_name: raw.name, email: raw.email, phone: raw.phone || null, company: raw.company || null, project_type: raw.service || null, budget: raw.budget || null, description: raw.message, status: "pending" });
+      }
     } catch (err) {
       console.error("Supabase save failed:", err);
+      addDemoRequest({ user_id: userId || null, full_name: raw.name, email: raw.email, phone: raw.phone || null, company: raw.company || null, project_type: raw.service || null, budget: raw.budget || null, description: raw.message, status: "pending" });
     }
+  } else {
+    // Fallback to demo DB
+    addDemoRequest({
+      user_id: userId || null,
+      full_name: raw.name,
+      email: raw.email,
+      phone: raw.phone || null,
+      company: raw.company || null,
+      project_type: raw.service || null,
+      budget: raw.budget || null,
+      description: raw.message,
+      status: "pending",
+    });
   }
 
   // ─── WhatsApp notification ───────────────────────────────────────────────

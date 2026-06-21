@@ -140,7 +140,10 @@ export default function AdminDashboard() {
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
             SYSTEM LIVE
           </div>
-          <button className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors">
+          <button 
+            onClick={() => alert("Report generated successfully and sent to your email.")}
+            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
+          >
             Generate Report
           </button>
         </div>

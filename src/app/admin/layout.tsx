@@ -11,7 +11,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen bg-[#02040a] text-slate-300 font-sans overflow-hidden">
       <AdminSidebar />
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0 min-h-0">
         <AdminTopbar />
         <main className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
           <div className="max-w-[1600px] mx-auto w-full">

@@ -4,8 +4,9 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Users, Search, Plus, Mail, Phone, Building2, FolderKanban,
-  Shield, ShieldOff, MoreHorizontal, ExternalLink, Calendar
+  Shield, ShieldOff, MoreHorizontal, ExternalLink, Calendar, X, Send
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type ClientRole = "active_client" | "normal_user";
 
@@ -37,6 +38,8 @@ export default function AdminClientsPage() {
   const [clients] = useState<Client[]>(DEMO_CLIENTS);
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<ClientRole | "all">("all");
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const router = useRouter();
 
   const filtered = clients.filter(c => {
     const matchSearch = !search || [c.full_name, c.email, c.company].some(v => v?.toLowerCase().includes(search.toLowerCase()));
@@ -55,7 +58,10 @@ export default function AdminClientsPage() {
           <h1 className="text-2xl font-bold text-white font-mono tracking-tight">Clients</h1>
           <p className="text-slate-400 text-sm mt-1">Manage portal access, permissions, and client profiles.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors">
+        <button 
+          onClick={() => setShowInviteModal(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
+        >
           <Plus className="w-4 h-4" /> Invite Client
         </button>
       </div>
@@ -96,7 +102,9 @@ export default function AdminClientsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((client, i) => (
           <motion.div key={client.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
-            className="p-5 rounded-2xl bg-[#0F172A] border border-white/5 hover:border-white/10 transition-colors group">
+            onClick={() => router.push(`/admin/projects`)}
+            className="p-5 rounded-2xl bg-[#0F172A] border border-white/5 hover:border-white/10 transition-colors group cursor-pointer"
+          >
             {/* Avatar + name */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -151,6 +159,37 @@ export default function AdminClientsPage() {
           </motion.div>
         ))}
       </div>
+
+      {/* Invite Client Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-[#0F172A] border border-white/10 rounded-2xl w-full max-w-md p-6 relative">
+            <button onClick={() => setShowInviteModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold text-white mb-2">Invite Client</h2>
+            <p className="text-sm text-slate-400 mb-6">Send an email invitation to access the client portal.</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Email Address</label>
+                <input type="email" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="client@company.com" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Full Name (Optional)</label>
+                <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="John Doe" />
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => setShowInviteModal(false)} className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-colors">Cancel</button>
+              <button onClick={() => { alert("Invitation sent!"); setShowInviteModal(false); }} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors">
+                <Send className="w-4 h-4" /> Send Invite
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
