@@ -13,6 +13,7 @@ interface LoginModalProps {
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,6 +26,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     e.preventDefault();
     setLoadingProvider(mode);
     setErrorMsg(null);
+    setSuccessMsg(null);
 
     // Fast-fail check
     if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('placeholder')) {
@@ -47,7 +49,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           }
         });
         if (error) throw error;
-        setErrorMsg("Success! Please check your email for a confirmation link.");
+        setSuccessMsg("Success! Please check your email for a confirmation link.");
         // Reset form to login
         setMode('login');
         setPassword('');
@@ -284,6 +286,12 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               {errorMsg && (
                 <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-center">
                   <p className="text-red-400 text-xs">{errorMsg}</p>
+                </div>
+              )}
+
+              {successMsg && (
+                <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-xl text-center">
+                  <p className="text-green-400 text-xs">{successMsg}</p>
                 </div>
               )}
 
