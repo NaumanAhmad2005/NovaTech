@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import {
   sanitizeString,
   validateName,
@@ -10,8 +11,13 @@ import {
   validateBudget,
 } from "@/lib/validators";
 
+// ─── Supabase admin client (service role bypasses RLS) ────────────────────────
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+);
+
 // ─── Simple in-memory rate limiter ────────────────────────────────────────
-// Allows max 3 submissions per IP per 10 minutes.
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const MAX_REQUESTS = 3;
 const WINDOW_MS = 10 * 60 * 1000; // 10 minutes
@@ -21,16 +27,15 @@ function checkRateLimit(ip: string): boolean {
   const entry = rateLimitMap.get(ip);
   if (!entry || now > entry.resetAt) {
     rateLimitMap.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return true; // allowed
+    return true;
   }
-  if (entry.count >= MAX_REQUESTS) return false; // blocked
+  if (entry.count >= MAX_REQUESTS) return false;
   entry.count++;
   return true;
 }
 
 // ─── Route handler ─────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  // 1. Rate limiting
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     req.headers.get("x-real-ip") ??
@@ -43,7 +48,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 2. Parse body safely
   let body: Record<string, unknown>;
   try {
     body = await req.json();
@@ -51,7 +55,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: "Invalid request body." }, { status: 400 });
   }
 
-  // 3. Extract & sanitize raw strings
   const raw = {
     name: sanitizeString(body.name as string),
     email: sanitizeString(body.email as string),
@@ -62,7 +65,6 @@ export async function POST(req: NextRequest) {
     message: sanitizeString(body.message as string),
   };
 
-  // 4. Server-side validation (never trust the client)
   const checks = [
     validateName(raw.name),
     validateEmail(raw.email),
@@ -78,7 +80,35 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: firstError.error }, { status: 400 });
   }
 
-  // 5. Build & send WhatsApp message
+  // ─── Save to Supabase project_requests ──────────────────────────────────
+  const userId = body.user_id as string | null;
+  const supabaseConfigured =
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder") &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (supabaseConfigured) {
+    try {
+      const { error: dbError } = await supabaseAdmin
+        .from("project_requests")
+        .insert({
+          user_id: userId || null,
+          full_name: raw.name,
+          email: raw.email,
+          phone: raw.phone || null,
+          company: raw.company || null,
+          project_type: raw.service || null,
+          budget: raw.budget || null,
+          description: raw.message,
+          status: "pending",
+        });
+      if (dbError) console.error("Supabase insert error:", dbError.message);
+    } catch (err) {
+      console.error("Supabase save failed:", err);
+    }
+  }
+
+  // ─── WhatsApp notification ───────────────────────────────────────────────
   const text = [
     "🚀 *New Project Brief — NovaTech*",
     "",
@@ -107,7 +137,6 @@ export async function POST(req: NextRequest) {
       if (!waRes.ok) console.error("CallMeBot error:", await waRes.text());
     } catch (err) {
       console.error("WhatsApp fetch failed:", err);
-      // Don't fail the request — form submission is still recorded
     }
   }
 
