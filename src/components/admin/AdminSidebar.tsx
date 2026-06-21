@@ -31,6 +31,11 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const { sidebarCollapsed, setSidebarCollapsed, mobileMenuOpen, setMobileMenuOpen } = useAdminStore();
 
+  const handleLogout = () => {
+    document.cookie = 'admin_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    window.location.href = '/';
+  };
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -98,38 +103,30 @@ export default function AdminSidebar() {
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 group relative",
                     isActive
-                      ? "bg-blue-500/10 text-blue-400"
+                      ? "bg-blue-600/10 text-blue-400"
                       : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
                   )}
                 >
-                  {isActive && (
-                    <motion.div
-                      layoutId="active-nav"
-                      className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r-full"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    />
-                  )}
-                  <item.icon className={cn("w-5 h-5 shrink-0 transition-transform group-hover:scale-110", isActive && "text-blue-400")} />
+                  <item.icon className={cn("w-5 h-5 shrink-0", isActive && "text-blue-500")} />
                   <AnimatePresence mode="wait">
                     {(!sidebarCollapsed || mobileMenuOpen) && (
-                      <motion.span
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: "auto" }}
-                        exit={{ opacity: 0, width: 0 }}
-                        className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="whitespace-nowrap"
                       >
                         {item.name}
-                      </motion.span>
+                      </motion.div>
                     )}
                   </AnimatePresence>
                   
-                  {/* Tooltip for collapsed state */}
-                  {sidebarCollapsed && !mobileMenuOpen && (
-                    <div className="absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl border border-white/10">
-                      {item.name}
-                    </div>
+                  {isActive && !sidebarCollapsed && (
+                    <motion.div
+                      layoutId="activeTabAdmin"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-500 rounded-r-full"
+                    />
                   )}
                 </div>
               </Link>
@@ -139,7 +136,11 @@ export default function AdminSidebar() {
 
         {/* User Profile */}
         <div className="p-4 border-t border-white/5">
-          <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors relative group">
+          <div 
+            onClick={handleLogout}
+            className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors relative group"
+            title="Sign Out"
+          >
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 p-[2px] shrink-0">
               <div className="w-full h-full rounded-full bg-[#050816] flex items-center justify-center border border-transparent">
                 <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-tr from-blue-400 to-cyan-300">NA</span>
@@ -159,7 +160,7 @@ export default function AdminSidebar() {
               )}
             </AnimatePresence>
             
-            <LogOut className={cn("w-4 h-4 text-slate-500 hover:text-red-400 transition-colors shrink-0", (sidebarCollapsed && !mobileMenuOpen) && "hidden")} />
+            <LogOut className={cn("w-4 h-4 text-slate-500 group-hover:text-red-400 transition-colors shrink-0", (sidebarCollapsed && !mobileMenuOpen) && "hidden")} />
           </div>
         </div>
       </motion.aside>
