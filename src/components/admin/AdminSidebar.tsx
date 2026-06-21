@@ -6,13 +6,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, FolderKanban, Users, Briefcase, FileText,
   CreditCard, Settings, Shield, Bot, Cloud, ChevronLeft,
-  ChevronRight, LifeBuoy, MessageSquare, Activity, LogOut, Zap
+  ChevronRight, LifeBuoy, MessageSquare, Activity, LogOut, Zap,
+  Globe
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdminStore } from "@/lib/adminStore";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Website CMS", href: "/admin/cms", icon: Globe },
   { name: "Projects", href: "/admin/projects", icon: FolderKanban },
   { name: "CRM", href: "/admin/crm", icon: Briefcase },
   { name: "Clients", href: "/admin/clients", icon: Users },
