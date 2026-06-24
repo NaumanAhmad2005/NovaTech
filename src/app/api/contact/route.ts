@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+
+export const dynamic = "force-dynamic";
 import {
   sanitizeString,
   validateName,
@@ -66,6 +68,39 @@ export async function POST(req: NextRequest) {
     message: sanitizeString(body.message as string),
   };
 
+  let userId = body.user_id as string | null;
+
+  // Attempt to get userId from the auth session if not provided
+  if (!userId) {
+    const supabaseConfigured =
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder") &&
+      process.env.SUPABASE_SERVICE_ROLE_KEY;
+      
+    if (supabaseConfigured) {
+      const authCookie = req.cookies.get("sb-npxsclxjumvbcsxccttt-auth-token") || req.cookies.get("supabase-auth-token");
+      if (authCookie) {
+        // Just extract user details from the session cookie or check user via supabase server client
+        // In app router, creating a server client is safer
+        const { createServerClient } = require("@supabase/ssr");
+        const supabaseServer = createServerClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+          {
+            cookies: {
+              get(name: string) { return req.cookies.get(name)?.value; },
+              set() {}, remove() {}
+            }
+          }
+        );
+        const { data: { session } } = await supabaseServer.auth.getSession();
+        if (session?.user) {
+          userId = session.user.id;
+        }
+      }
+    }
+  }
+
   const checks = [
     validateName(raw.name),
     validateEmail(raw.email),
@@ -82,7 +117,6 @@ export async function POST(req: NextRequest) {
   }
 
   // ─── Save to Supabase project_requests ──────────────────────────────────
-  const userId = body.user_id as string | null;
   const supabaseConfigured =
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder") &&

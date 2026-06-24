@@ -58,7 +58,7 @@ export default function AdminCRMPage() {
   const fetchLeads = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/requests");
+      const res = await fetch(`/api/admin/requests?_t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
         setLeads(data.requests || []);
