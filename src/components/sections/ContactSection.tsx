@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { Send, Mail, Phone, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import LoginModal from "@/components/ui/LoginModal";
 import {
   validateName,
   validateEmail,
@@ -66,6 +67,34 @@ export default function ContactSection() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [user, setUser] = useState<any>(null);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      let loggedIn = false;
+      if (document.cookie.includes('demo_client_session=true')) {
+        setUser({ isDemo: true });
+        loggedIn = true;
+      } else {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser(session.user);
+          loggedIn = true;
+        }
+      }
+
+      const saved = localStorage.getItem('pending_project_request');
+      if (saved) {
+        try {
+          setForm(JSON.parse(saved));
+        } catch (e) {}
+      }
+    };
+    checkSession();
+  }, []);
 
   // Validate a single field on blur
   const validateField = useCallback((name: keyof FormFields, value: string): string => {
@@ -111,6 +140,13 @@ export default function ContactSection() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateAll()) return; // stop if client errors exist
+    
+    if (!user) {
+      localStorage.setItem('pending_project_request', JSON.stringify(form));
+      setIsLoginModalOpen(true);
+      return;
+    }
+
     setLoading(true);
     setSubmitError("");
     try {
@@ -125,6 +161,7 @@ export default function ContactSection() {
         return;
       }
       setSubmitted(true);
+      localStorage.removeItem('pending_project_request');
     } catch {
       setSubmitError("Network error. Please check your connection and try again.");
     } finally {
@@ -407,6 +444,7 @@ export default function ContactSection() {
           </motion.div>
         </div>
       </div>
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
     </section>
   );
 }

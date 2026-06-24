@@ -100,12 +100,58 @@ export async function POST(req: NextRequest) {
             status: "active",
             progress: 0,
             phase: "Phase 1: Discovery",
+            budget: request.budget || "TBD",
+            start_date: new Date().toISOString().split('T')[0],
           });
 
         if (projectError) {
           console.error("Project creation error:", projectError.message);
+          const { addDemoProject } = require("@/lib/demoDb");
+          addDemoProject({
+            client_id: request.user_id || null,
+            client_email: request.email,
+            client_name: request.full_name,
+            title: projectTitle || request.project_type || "New Project",
+            description: request.description,
+            status: "active",
+            progress: 0,
+            phase: "Phase 1: Discovery",
+            budget: request.budget || "TBD",
+            start_date: new Date().toISOString().split('T')[0],
+            team: []
+          });
         }
-      } catch (err) {}
+      } catch (err) {
+          const { addDemoProject } = require("@/lib/demoDb");
+          addDemoProject({
+            client_id: request.user_id || null,
+            client_email: request.email,
+            client_name: request.full_name,
+            title: projectTitle || request.project_type || "New Project",
+            description: request.description,
+            status: "active",
+            progress: 0,
+            phase: "Phase 1: Discovery",
+            budget: request.budget || "TBD",
+            start_date: new Date().toISOString().split('T')[0],
+            team: []
+          });
+      }
+    } else {
+        const { addDemoProject } = require("@/lib/demoDb");
+        addDemoProject({
+          client_id: request.user_id || null,
+          client_email: request.email,
+          client_name: request.full_name,
+          title: projectTitle || request.project_type || "New Project",
+          description: request.description,
+          status: "active",
+          progress: 0,
+          phase: "Phase 1: Discovery",
+          budget: request.budget || "TBD",
+          start_date: new Date().toISOString().split('T')[0],
+          team: []
+        });
     }
   }
 

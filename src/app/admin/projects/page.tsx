@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   FolderKanban, Plus, Search, MoreHorizontal, Users,
@@ -40,15 +40,35 @@ const STATUS_CONFIG: Record<ProjectStatus, { label: string; color: string; bg: s
 const COLORS = ["bg-blue-500", "bg-purple-500", "bg-cyan-500", "bg-pink-500", "bg-emerald-500"];
 
 export default function AdminProjectsPage() {
-  const [projects] = useState<Project[]>(DEMO_PROJECTS);
+  const [projects, setProjects] = useState<Project[]>(DEMO_PROJECTS);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<ProjectStatus | "all">("all");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [showNewModal, setShowNewModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState<Project | null>(null);
 
+  const fetchProjects = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/projects?_t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.projects && data.projects.length > 0) {
+          setProjects(data.projects.map((p: any) => ({
+            ...p,
+            client: p.client_name || p.client || "Unknown Client"
+          })));
+        }
+      }
+    } catch (err) {}
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchProjects(); }, [fetchProjects]);
+
   const filtered = projects.filter(p => {
-    const matchSearch = !search || [p.title, p.client].some(v => v.toLowerCase().includes(search.toLowerCase()));
+    const matchSearch = !search || [p.title, p.client].some(v => v && v.toLowerCase().includes(search.toLowerCase()));
     const matchStatus = filterStatus === "all" || p.status === filterStatus;
     return matchSearch && matchStatus;
   });

@@ -5,6 +5,7 @@ const DB_PATH = path.join(process.cwd(), "demo_db.json");
 
 interface DemoDB {
   requests: any[];
+  projects: any[];
 }
 
 function getDB(): DemoDB {
@@ -16,7 +17,7 @@ function getDB(): DemoDB {
   } catch (e) {
     console.error("Error reading demo db", e);
   }
-  return { requests: [] };
+  return { requests: [], projects: [] };
 }
 
 function saveDB(data: DemoDB) {
@@ -45,4 +46,27 @@ export function updateDemoRequest(id: string, updates: any) {
     saveDB(db);
   }
   return db.requests[index];
+}
+
+export function addDemoProject(project: any) {
+  const db = getDB();
+  db.projects = db.projects || [];
+  db.projects.unshift({ ...project, id: "proj_" + Date.now().toString(), created_at: new Date().toISOString() });
+  saveDB(db);
+}
+
+export function getDemoProjects() {
+  const db = getDB();
+  return db.projects || [];
+}
+
+export function updateDemoProject(id: string, updates: any) {
+  const db = getDB();
+  db.projects = db.projects || [];
+  const index = db.projects.findIndex(r => r.id === id);
+  if (index !== -1) {
+    db.projects[index] = { ...db.projects[index], ...updates };
+    saveDB(db);
+  }
+  return db.projects[index];
 }
