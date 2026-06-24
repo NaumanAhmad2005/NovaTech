@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Users, Search, Plus, Mail, Phone, Building2, FolderKanban,
@@ -35,11 +35,28 @@ function getInitials(name: string) {
 }
 
 export default function AdminClientsPage() {
-  const [clients] = useState<Client[]>(DEMO_CLIENTS);
+  const [clients, setClients] = useState<Client[]>(DEMO_CLIENTS);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<ClientRole | "all">("all");
   const [showInviteModal, setShowInviteModal] = useState(false);
   const router = useRouter();
+
+  const fetchClients = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/clients?_t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.clients && data.clients.length > 0) {
+          setClients(data.clients);
+        }
+      }
+    } catch (err) {}
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchClients(); }, [fetchClients]);
 
   const filtered = clients.filter(c => {
     const matchSearch = !search || [c.full_name, c.email, c.company].some(v => v?.toLowerCase().includes(search.toLowerCase()));

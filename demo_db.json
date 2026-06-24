@@ -5,6 +5,19 @@
       "full_name": "nauman",
       "email": "naumanf25@gmail.com",
       "phone": "03019101742",
+      "company": "Naumantech",
+      "project_type": "Custom Software Development",
+      "budget": "$10K – $50K",
+      "description": "mmmmmmmmmmmmmmmm",
+      "status": "approved",
+      "id": "req_1782318559263",
+      "created_at": "2026-06-24T16:29:19.263Z"
+    },
+    {
+      "user_id": null,
+      "full_name": "nauman",
+      "email": "naumanf25@gmail.com",
+      "phone": "03019101742",
       "company": "nauman",
       "project_type": "UI/UX Design",
       "budget": "$50K – $150K",
@@ -38,6 +51,23 @@
       "status": "approved",
       "id": "req_1782063151069",
       "created_at": "2026-06-21T17:32:31.070Z"
+    }
+  ],
+  "projects": [
+    {
+      "client_id": null,
+      "client_email": "naumanf25@gmail.com",
+      "client_name": "nauman",
+      "title": "Custom Software Development",
+      "description": "mmmmmmmmmmmmmmmm",
+      "status": "active",
+      "progress": 0,
+      "phase": "Phase 1: Discovery",
+      "budget": "$10K – $50K",
+      "start_date": "2026-06-24",
+      "team": [],
+      "id": "proj_1782318575858",
+      "created_at": "2026-06-24T16:29:35.858Z"
     }
   ]
 }
