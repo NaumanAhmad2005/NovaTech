@@ -33,7 +33,7 @@ export default function DocsPage() {
               { id: "api", label: "API Reference", icon: Code, count: 24 },
               { id: "security", label: "Security & Compliance", icon: Shield, count: 6 },
             ].map((cat, i) => (
-              <button key={cat.id} className="w-full flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors">
+              <button key={cat.id} onClick={() => alert(`Filtering by category: ${cat.label}`)} className="w-full flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors">
                 <div className="flex items-center gap-3 text-slate-300">
                   <FolderOpen className="w-4 h-4 text-slate-500" />
                   <span className="text-sm font-medium">{cat.label}</span>
@@ -55,6 +55,7 @@ export default function DocsPage() {
               { title: "Handling Stripe Webhooks Locally", cat: "API Reference", date: "3 weeks ago" },
             ].map((doc, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
+                onClick={() => alert(`Opening document: ${doc.title}`)}
                 className="p-4 rounded-xl bg-[#0F172A] border border-white/5 hover:border-white/10 transition-colors cursor-pointer group">
                 <div className="flex items-start justify-between">
                   <div>

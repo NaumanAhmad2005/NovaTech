@@ -165,10 +165,10 @@ export default function AdminClientsPage() {
                 <span>{client.project_count} project{client.project_count !== 1 ? "s" : ""}</span>
               </div>
               <div className="flex gap-1">
-                <button className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                <button onClick={() => alert(`Opening details for ${client.full_name}...`)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
                   <ExternalLink className="w-3.5 h-3.5" />
                 </button>
-                <button className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                <button onClick={() => alert(`Opening options for ${client.full_name}...`)} className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
                   <MoreHorizontal className="w-3.5 h-3.5" />
                 </button>
               </div>

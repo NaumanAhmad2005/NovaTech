@@ -111,7 +111,7 @@ export default function InvoicesPage() {
                 <div className="flex items-center gap-6">
                   <p className="text-white font-bold font-mono text-lg">${inv.amount.toLocaleString()}</p>
                   <StatusBadge status={inv.status} />
-                  <button className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                  <button onClick={() => alert(`Downloading invoice ${inv.id}...`)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
                     <Download className="w-3.5 h-3.5" />
                   </button>
                 </div>

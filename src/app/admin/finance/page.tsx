@@ -60,7 +60,10 @@ export default function AdminFinancePage() {
           <h1 className="text-2xl font-bold text-white font-mono tracking-tight">Finance</h1>
           <p className="text-slate-400 text-sm mt-1">Revenue overview, invoices, and payment tracking.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors">
+        <button 
+          onClick={() => alert("Redirecting to Invoice Generator...")}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
+        >
           <Plus className="w-4 h-4" /> Generate Invoice
         </button>
       </div>
@@ -153,10 +156,10 @@ export default function AdminFinancePage() {
                   <p className="text-xs text-slate-500 mt-0.5">Due {new Date(inv.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors" title="Send">
+                  <button onClick={() => alert(`Invoice ${inv.id} sent to ${inv.client} via email.`)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors" title="Send">
                     <Send className="w-3.5 h-3.5" />
                   </button>
-                  <button className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors" title="Download">
+                  <button onClick={() => alert(`Downloading PDF for invoice ${inv.id}...`)} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors" title="Download">
                     <Download className="w-3.5 h-3.5" />
                   </button>
                 </div>

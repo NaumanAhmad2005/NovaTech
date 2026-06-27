@@ -222,7 +222,7 @@ export default function AdminProjectsPage() {
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={() => setShowNewModal(false)} className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition-colors">Cancel</button>
-              <button onClick={() => setShowNewModal(false)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors">
+              <button onClick={() => { alert("New project saved successfully!"); setShowNewModal(false); }} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors">
                 <Save className="w-4 h-4" /> Save Project
               </button>
             </div>

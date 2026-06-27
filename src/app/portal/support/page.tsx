@@ -121,7 +121,7 @@ export default function SupportPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <StatusBadge status={t.status} />
-                  <button className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                  <button onClick={() => alert("Opening ticket thread...")} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
                     <MessageSquare className="w-3.5 h-3.5" />
                   </button>
                 </div>

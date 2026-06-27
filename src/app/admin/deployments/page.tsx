@@ -19,7 +19,10 @@ export default function DeploymentsPage() {
           </h1>
           <p className="text-slate-400 text-sm mt-1">Manage CI/CD pipelines, environments, and rollbacks.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors">
+        <button 
+          onClick={() => alert("Triggering new deployment pipeline...")}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
+        >
           <RotateCw className="w-4 h-4" /> Trigger Deploy
         </button>
       </div>
