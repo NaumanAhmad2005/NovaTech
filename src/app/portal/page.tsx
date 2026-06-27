@@ -1,332 +1,441 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
-  CheckCircle2, Calendar, MessageSquare,
-  FileText, Activity, AlertCircle, ArrowUpRight, Play, CheckCircle, ChevronRight,
-  Rocket, Loader2
+  CheckCircle2, Calendar, MessageSquare, FileText, Activity,
+  AlertCircle, ArrowUpRight, ChevronRight, Rocket, Loader2,
+  TrendingUp, Clock, Users, DollarSign, Sparkles, Zap,
+  Shield, Bell, ClipboardCheck, BarChart3, RefreshCw, Circle
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 
-interface Project {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  progress: number;
-  phase: string;
-  start_date: string | null;
-  estimated_delivery: string | null;
+// ── Demo data ────────────────────────────────────────────────────────────────
+const DEMO_PROJECT = {
+  id: "demo",
+  title: "GlobalTech Enterprise Platform",
+  description: "Full-stack B2B SaaS with auth, payments, analytics and CRM modules.",
+  status: "active",
+  progress: 68,
+  phase: "Phase 3 — Frontend Development",
+  health: "on_track" as "on_track" | "at_risk" | "delayed",
+  start_date: "2026-01-15",
+  estimated_delivery: "2026-08-20",
+  budget_used: 62,
+  risk: "Low",
+};
+
+const DEMO_SPRINT = {
+  goal: "Complete authentication module + integrate Stripe webhooks",
+  progress: 72,
+  completed: 18,
+  remaining: 7,
+  end_date: "2026-07-04",
+  ai_summary: "Sprint 14 is progressing well. The auth system has been completed and deployed to staging. Stripe webhook handlers are 80% done. No blockers currently. On track for sprint close.",
+};
+
+const DEMO_MILESTONES = [
+  { id: "1", name: "Project Kickoff", date: "Jan 20", done: true },
+  { id: "2", name: "UI/UX Design", date: "Feb 15", done: true },
+  { id: "3", name: "Backend Architecture", date: "Mar 10", done: true },
+  { id: "4", name: "Authentication Module", date: "Jun 30", done: true },
+  { id: "5", name: "Payment Gateway", date: "Jul 15", done: false, current: true },
+  { id: "6", name: "Launch & Deployment", date: "Aug 20", done: false },
+];
+
+const DEMO_ACTIVITY = [
+  { id: "1", type: "design", icon: "🎨", text: "New design uploaded — Payment Flow v3", time: "2h ago" },
+  { id: "2", type: "deploy", icon: "🚀", text: "Deployed to staging — build 1.4.7", time: "5h ago" },
+  { id: "3", type: "message", icon: "💬", text: "New message from your Project Manager", time: "Yesterday" },
+  { id: "4", type: "task", icon: "✅", text: "Authentication module completed", time: "Yesterday" },
+  { id: "5", type: "invoice", icon: "💳", text: "Invoice #INV-004 issued — $22,500", time: "2 days ago" },
+];
+
+const DEMO_TEAM = [
+  { name: "Sarah Chen", role: "Project Manager", online: true, initials: "SC", color: "from-blue-500 to-cyan-400" },
+  { name: "Marcus Dev", role: "Tech Lead", online: true, initials: "MD", color: "from-purple-500 to-pink-400" },
+  { name: "Aisha UI", role: "UI Designer", online: false, initials: "AU", color: "from-orange-500 to-yellow-400" },
+  { name: "Reza QA", role: "QA Engineer", online: true, initials: "RQ", color: "from-green-500 to-emerald-400" },
+];
+
+const DEMO_PENDING = [
+  { type: "approval", label: "Design review — Payment Flow", urgent: true },
+  { type: "invoice", label: "Invoice #INV-004 due Jul 15", urgent: false },
+  { type: "meeting", label: "Sprint 14 Demo — Jul 4 at 10:00 AM", urgent: false },
+];
+
+// ── Health badge ─────────────────────────────────────────────────────────────
+function HealthBadge({ health }: { health: string }) {
+  const c = {
+    on_track: "bg-green-500/10 text-green-400 border-green-500/20",
+    at_risk:  "bg-orange-500/10 text-orange-400 border-orange-500/20",
+    delayed:  "bg-red-500/10 text-red-400 border-red-500/20",
+  }[health] ?? "bg-slate-500/10 text-slate-400 border-slate-500/20";
+  const label = { on_track: "On Track", at_risk: "At Risk", delayed: "Delayed" }[health] ?? health;
+  return (
+    <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${c}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${health === "on_track" ? "bg-green-400" : health === "at_risk" ? "bg-orange-400" : "bg-red-400"} animate-pulse`} />
+      {label}
+    </span>
+  );
 }
 
-interface Milestone {
-  id: string;
-  title: string;
-  due_date: string | null;
-  completed: boolean;
+// ── Section wrapper ──────────────────────────────────────────────────────────
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-2xl bg-[#0a0f1e] border border-white/5 ${className}`}>
+      {children}
+    </div>
+  );
 }
 
+// ── Main dashboard ───────────────────────────────────────────────────────────
 export default function PortalDashboard() {
   const [loading, setLoading] = useState(true);
-  const [project, setProject] = useState<Project | null>(null);
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [userName, setUserName] = useState("Client");
-  const supabase = createClient();
+  const [project]   = useState(DEMO_PROJECT);
+  const [sprint]    = useState(DEMO_SPRINT);
+  const [milestones] = useState(DEMO_MILESTONES);
+  const [activity]  = useState(DEMO_ACTIVITY);
+  const [team]      = useState(DEMO_TEAM);
+  const [pending]   = useState(DEMO_PENDING);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [greeting, setGreeting] = useState("Good morning");
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Demo mode
-        if (document.cookie.includes("demo_client_session=true")) {
-          setUserName("Demo User");
-          setProject({
-            id: "demo",
-            title: "GlobalTech Enterprise App",
-            description: "Full-stack enterprise application",
-            status: "active",
-            progress: 68,
-            phase: "Phase 3: Development",
-            start_date: "2026-01-15",
-            estimated_delivery: "2026-07-28",
-          });
-          setMilestones([
-            { id: "1", title: "Project Kickoff", due_date: "2026-01-20", completed: true },
-            { id: "2", title: "UI/UX Design", due_date: "2026-02-15", completed: true },
-            { id: "3", title: "Backend Architecture", due_date: "2026-03-10", completed: true },
-            { id: "4", title: "Payment Gateway", due_date: "2026-07-01", completed: false },
-            { id: "5", title: "Launch & Deployment", due_date: "2026-07-28", completed: false },
-          ]);
-          setLoading(false);
-          return;
-        }
+    const h = new Date().getHours();
+    setGreeting(h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening");
+    setTimeout(() => setLoading(false), 600);
+  }, []);
 
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) { setLoading(false); return; }
-
-        setUserName(session.user.user_metadata?.full_name?.split(" ")[0] || "Client");
-
-        // Fetch project
-        const { data: projects } = await supabase
-          .from("projects")
-          .select("*")
-          .eq("client_id", session.user.id)
-          .eq("status", "active")
-          .limit(1);
-
-        if (projects && projects.length > 0) {
-          const p = projects[0];
-          setProject(p);
-
-          // Fetch milestones
-          const { data: ms } = await supabase
-            .from("milestones")
-            .select("*")
-            .eq("project_id", p.id)
-            .order("due_date", { ascending: true });
-          setMilestones(ms || []);
-        }
-      } catch (err) {
-        console.error("Portal load error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, [supabase]);
-
-  // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="h-[60vh] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+      <div className="flex items-center justify-center h-[80vh]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+          <p className="text-slate-400 text-sm">Loading your workspace…</p>
+        </div>
       </div>
     );
   }
 
-  // ── No project yet ─────────────────────────────────────────────────────────
-  if (!project) {
-    return (
-      <div className="h-[80vh] flex flex-col items-center justify-center max-w-2xl mx-auto text-center px-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="p-8 rounded-3xl bg-[#111827] border border-white/10 shadow-2xl relative overflow-hidden w-full"
-        >
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[200px] bg-blue-500/10 blur-[80px] rounded-full pointer-events-none" />
-          <div className="w-20 h-20 mx-auto rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-6 text-blue-400">
-            <Rocket className="w-10 h-10" />
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-4">Welcome to NovaTech, {userName}!</h1>
-          <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-            You haven't started any project yet. Your dedicated portal will be activated once your project request is approved by our team.
-          </p>
-          <Link
-            href="/#contact"
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-xl font-medium transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] border border-blue-500/50"
-          >
-            Start Your Project <ArrowUpRight className="w-5 h-5" />
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // ── Milestones helpers ─────────────────────────────────────────────────────
-  const completedCount = milestones.filter((m) => m.completed).length;
-  const nextMilestone = milestones.find((m) => !m.completed);
-  const circumference = 2 * Math.PI * 45;
-  const dashOffset = circumference - (circumference * (project.progress / 100));
+  const daysLeft = Math.ceil((new Date(project.estimated_delivery).getTime() - Date.now()) / 86400000);
+  const circumference = 2 * Math.PI * 34;
 
   return (
-    <div className="space-y-8 pb-10">
-      {/* Greeting */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-end justify-between gap-4"
-      >
+    <div className="space-y-6 pb-8">
+
+      {/* ── Greeting ── */}
+      <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Good day, {userName}.</h1>
-          <p className="text-slate-400 mt-2 text-lg">
-            Your project is at <span className="text-blue-400 font-semibold">{project.progress}%</span> completion.
-          </p>
+          <p className="text-slate-500 text-sm mb-1">{greeting} 👋</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+            Command Center
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">Here's everything about your project — right now.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium transition-colors text-white">
-            Schedule Meeting
+          <HealthBadge health={project.health} />
+          <button
+            onClick={() => setAiOpen(!aiOpen)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-sm font-medium transition-all shadow-lg shadow-blue-900/30"
+          >
+            <Sparkles className="w-4 h-4" />
+            Ask Nova AI
           </button>
         </div>
       </motion.div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Project Progress Ring */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="lg:col-span-2 rounded-3xl bg-[#0F172A] border border-white/5 overflow-hidden relative"
-        >
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-[500px] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
-          <div className="p-8 relative z-10 flex flex-col md:flex-row items-center gap-10 h-full">
-            {/* Ring */}
-            <div className="relative w-64 h-64 shrink-0">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
-                <motion.circle
-                  cx="50" cy="50" r="45" fill="none"
-                  stroke="url(#blue-gradient)"
-                  strokeWidth="6"
-                  strokeLinecap="round"
-                  strokeDasharray={circumference}
-                  initial={{ strokeDashoffset: circumference }}
-                  animate={{ strokeDashoffset: dashOffset }}
-                  transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
-                />
-                <defs>
-                  <linearGradient id="blue-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#38BDF8" />
-                    <stop offset="100%" stopColor="#2563EB" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-5xl font-bold text-white font-mono tracking-tighter">
-                  {project.progress}<span className="text-2xl text-slate-400">%</span>
-                </span>
-                <span className="text-xs text-blue-400 uppercase tracking-widest mt-1 font-semibold">Active</span>
+      {/* ── AI Assistant Drawer ── */}
+      <AnimatePresence>
+        {aiOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <Card className="p-5 border-blue-500/20 bg-gradient-to-r from-blue-900/10 to-purple-900/10">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-white font-semibold text-sm">Nova AI — Project Brief</p>
+                  <p className="text-slate-400 text-xs">Auto-generated · Updated daily</p>
+                </div>
               </div>
-            </div>
+              <p className="text-slate-300 text-sm leading-relaxed border-l-2 border-blue-500/40 pl-4">
+                This week, the <strong className="text-white">authentication system</strong> and <strong className="text-white">user dashboard</strong> were completed and deployed to staging. The <strong className="text-white">payment gateway integration</strong> is currently in progress and remains on schedule. Your next required action is to <strong className="text-blue-400">review and approve the updated UI mockups</strong> before Friday. No critical project risks have been identified. You are <strong className="text-green-400">68% complete</strong> with <strong className="text-white">{daysLeft} days</strong> until estimated delivery.
+              </p>
+              <div className="flex gap-3 mt-4 flex-wrap">
+                {["What was completed this week?", "Any approvals waiting?", "Explain the latest deployment"].map(q => (
+                  <button key={q} className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-slate-300 border border-white/10 transition-colors">
+                    {q}
+                  </button>
+                ))}
+                <Link href="/portal/ai" className="px-3 py-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-xs text-blue-400 border border-blue-500/20 transition-colors flex items-center gap-1">
+                  Open AI Assistant <ArrowUpRight className="w-3 h-3" />
+                </Link>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            {/* Project info */}
-            <div className="flex-1 space-y-6 w-full">
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-1">{project.title}</h2>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-green-400 font-medium">{project.phase}</span>
+      {/* ── KPI Row ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "Overall Progress", value: `${project.progress}%`, icon: TrendingUp, color: "text-blue-400", sub: "Sprint 14 active" },
+          { label: "Days to Delivery", value: daysLeft, icon: Clock, color: "text-orange-400", sub: project.estimated_delivery },
+          { label: "Team Members", value: "8", icon: Users, color: "text-purple-400", sub: "4 online now" },
+          { label: "Budget Used", value: `${project.budget_used}%`, icon: DollarSign, color: "text-green-400", sub: "Within estimate" },
+        ].map((kpi, i) => (
+          <motion.div key={kpi.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
+            <Card className="p-5 hover:border-white/10 transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center">
+                  <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1 font-medium">Next Milestone</p>
-                  <p className="text-sm font-semibold text-white">{nextMilestone?.title || "All done!"}</p>
-                  {nextMilestone?.due_date && (
-                    <p className="text-xs text-blue-400 mt-1">
-                      Due {new Date(nextMilestone.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </p>
-                  )}
-                </div>
-                <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1 font-medium">Est. Delivery</p>
-                  <p className="text-sm font-semibold text-white">
-                    {project.estimated_delivery
-                      ? new Date(project.estimated_delivery).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
-                      : "TBD"}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">On Schedule</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-400">Milestones</span>
-                  <span className="text-white font-mono">{completedCount} / {milestones.length} completed</span>
-                </div>
-                <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: milestones.length > 0 ? `${(completedCount / milestones.length) * 100}%` : "0%" }}
-                    transition={{ duration: 1, delay: 0.8 }}
-                    className="h-full bg-blue-500 rounded-full"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Milestones List */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="rounded-3xl bg-gradient-to-b from-[#111827] to-[#0F172A] border border-white/5 p-6 flex flex-col"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <Activity className="w-5 h-5 text-blue-400" />
-              Milestones
-            </h3>
-            <span className="px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20">
-              {milestones.length} total
-            </span>
-          </div>
-
-          <div className="flex-1 space-y-3 overflow-y-auto scrollbar-hide">
-            {milestones.length === 0 ? (
-              <p className="text-slate-500 text-sm text-center py-4">No milestones yet.</p>
-            ) : (
-              milestones.map((m) => (
-                <div
-                  key={m.id}
-                  className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${
-                    m.completed
-                      ? "bg-green-500/5 border-green-500/10"
-                      : "bg-blue-500/5 border-blue-500/10"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 text-sm">
-                    {m.completed ? (
-                      <CheckCircle className="w-4 h-4 text-green-400 shrink-0" />
-                    ) : (
-                      <Play className="w-4 h-4 text-blue-400 shrink-0" />
-                    )}
-                    <span className={m.completed ? "text-slate-400 line-through" : "text-white font-medium"}>
-                      {m.title}
-                    </span>
-                  </div>
-                  {m.due_date && (
-                    <span className="text-xs text-slate-500 shrink-0">
-                      {new Date(m.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </span>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </motion.div>
+              <p className={`text-2xl font-bold font-mono ${kpi.color}`}>{kpi.value}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{kpi.label}</p>
+              <p className="text-xs text-slate-600 mt-1">{kpi.sub}</p>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Quick Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="p-6 rounded-3xl bg-[#111827] border border-white/5 group hover:border-white/10 transition-colors cursor-pointer">
-          <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center mb-4 text-purple-400 group-hover:scale-110 transition-transform">
-            <Calendar className="w-5 h-5" />
-          </div>
-          <h3 className="text-white font-semibold mb-1">Schedule Meeting</h3>
-          <p className="text-slate-400 text-sm">Book a call with your project manager.</p>
-        </motion.div>
+      {/* ── Main Grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-          className="p-6 rounded-3xl bg-[#111827] border border-white/5 group hover:border-white/10 transition-colors cursor-pointer">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center mb-4 text-blue-400 group-hover:scale-110 transition-transform">
-            <MessageSquare className="w-5 h-5" />
-          </div>
-          <h3 className="text-white font-semibold mb-1">Send Message</h3>
-          <p className="text-slate-400 text-sm">Direct line to your development team.</p>
-        </motion.div>
+        {/* ── Left: Progress + Milestones ── */}
+        <div className="lg:col-span-2 space-y-6">
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-          className="p-6 rounded-3xl bg-[#111827] border border-white/5 group hover:border-white/10 transition-colors cursor-pointer">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 text-emerald-400 group-hover:scale-110 transition-transform">
-            <FileText className="w-5 h-5" />
-          </div>
-          <h3 className="text-white font-semibold mb-1">View Files</h3>
-          <p className="text-slate-400 text-sm">Designs, contracts, and deliverables.</p>
-        </motion.div>
+          {/* Project Health Card */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <Card className="p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Active Project</p>
+                  <h2 className="text-lg font-bold text-white">{project.title}</h2>
+                  <p className="text-sm text-slate-400 mt-0.5">{project.phase}</p>
+                </div>
+                <div className="relative w-20 h-20 shrink-0">
+                  <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
+                    <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
+                    <motion.circle cx="40" cy="40" r="34" fill="none" stroke="#3B82F6" strokeWidth="6" strokeLinecap="round"
+                      strokeDasharray={circumference}
+                      initial={{ strokeDashoffset: circumference }}
+                      animate={{ strokeDashoffset: circumference - (circumference * project.progress / 100) }}
+                      transition={{ duration: 1.5, ease: "easeOut", delay: 0.5 }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center flex-col">
+                    <span className="text-xl font-bold text-white font-mono">{project.progress}%</span>
+                    <span className="text-[10px] text-slate-500">done</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Milestone roadmap */}
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Roadmap</p>
+                <div className="relative">
+                  <div className="flex items-center gap-0">
+                    {milestones.map((m, i) => (
+                      <div key={m.id} className="flex items-center flex-1">
+                        <div className="flex flex-col items-center gap-1">
+                          <motion.div
+                            initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5 + i * 0.1 }}
+                            className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
+                              m.done ? "bg-blue-500/20 border-blue-500 text-blue-400" :
+                              (m as any).current ? "bg-blue-600/30 border-blue-400 text-blue-300 ring-4 ring-blue-500/20 animate-pulse" :
+                              "bg-white/5 border-white/10 text-slate-600"
+                            }`}
+                          >
+                            {m.done ? <CheckCircle2 className="w-4 h-4" /> :
+                              (m as any).current ? <Zap className="w-4 h-4" /> :
+                              <Circle className="w-3 h-3" />}
+                          </motion.div>
+                          <p className={`text-[9px] text-center leading-tight max-w-[60px] hidden md:block ${m.done ? "text-blue-400" : (m as any).current ? "text-white font-semibold" : "text-slate-600"}`}>
+                            {m.name}
+                          </p>
+                          <p className="text-[9px] text-slate-700 hidden md:block">{m.date}</p>
+                        </div>
+                        {i < milestones.length - 1 && (
+                          <div className={`flex-1 h-0.5 mx-1 ${m.done ? "bg-blue-500/40" : "bg-white/5"}`} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Sprint Overview */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Current Sprint</p>
+                  <h3 className="text-base font-bold text-white">{sprint.goal}</h3>
+                </div>
+                <Link href="/portal/tasks" className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors">
+                  Full view <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
+
+              <div className="flex items-center gap-6 mb-4">
+                <div className="flex-1">
+                  <div className="flex justify-between text-xs text-slate-500 mb-2">
+                    <span>Progress</span><span className="text-white font-mono">{sprint.progress}%</span>
+                  </div>
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }} animate={{ width: `${sprint.progress}%` }}
+                      transition={{ duration: 1, ease: "easeOut", delay: 0.6 }}
+                      className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-4 text-center shrink-0">
+                  <div>
+                    <p className="text-xl font-bold text-green-400 font-mono">{sprint.completed}</p>
+                    <p className="text-[10px] text-slate-500">Done</p>
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-orange-400 font-mono">{sprint.remaining}</p>
+                    <p className="text-[10px] text-slate-500">Left</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-400 mt-0.5 shrink-0" />
+                  <p className="text-xs text-slate-400 leading-relaxed">{sprint.ai_summary}</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-600 mt-3 flex items-center gap-1">
+                <Calendar className="w-3 h-3" /> Sprint ends {new Date(sprint.end_date).toLocaleDateString("en-US", { month: "long", day: "numeric" })}
+              </p>
+            </Card>
+          </motion.div>
+
+          {/* Recent Activity */}
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <Card className="overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-slate-400" /> Recent Activity
+                </h3>
+                <Link href="/portal" className="text-xs text-blue-400 hover:text-blue-300 transition-colors">View all</Link>
+              </div>
+              <div className="divide-y divide-white/5">
+                {activity.map((a, i) => (
+                  <motion.div key={a.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 + i * 0.05 }}
+                    className="flex items-center gap-4 px-5 py-3.5 hover:bg-white/[0.02] transition-colors">
+                    <span className="text-xl shrink-0">{a.icon}</span>
+                    <p className="flex-1 text-sm text-slate-300">{a.text}</p>
+                    <span className="text-xs text-slate-600 shrink-0">{a.time}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* ── Right column ── */}
+        <div className="space-y-6">
+
+          {/* Pending Actions */}
+          <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+            <Card className="overflow-hidden">
+              <div className="px-5 py-4 border-b border-white/5">
+                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-orange-400" /> Pending Actions
+                </h3>
+              </div>
+              <div className="divide-y divide-white/5">
+                {pending.map((p, i) => (
+                  <div key={i} className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/[0.02] transition-colors cursor-pointer">
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${p.urgent ? "bg-red-400 animate-pulse" : "bg-blue-400"}`} />
+                    <p className="text-sm text-slate-300 flex-1">{p.label}</p>
+                    <ChevronRight className="w-4 h-4 text-slate-600" />
+                  </div>
+                ))}
+              </div>
+              <div className="px-5 py-3 border-t border-white/5">
+                <Link href="/portal/approvals" className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
+                  View all approvals <ArrowUpRight className="w-3 h-3" />
+                </Link>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Team Status */}
+          <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }}>
+            <Card className="overflow-hidden">
+              <div className="px-5 py-4 border-b border-white/5">
+                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                  <Users className="w-4 h-4 text-slate-400" /> Your Team
+                </h3>
+              </div>
+              <div className="divide-y divide-white/5">
+                {team.map((member, i) => (
+                  <div key={i} className="flex items-center gap-3 px-5 py-3 hover:bg-white/[0.02] transition-colors">
+                    <div className="relative">
+                      <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${member.color} flex items-center justify-center text-xs font-bold text-white shrink-0`}>
+                        {member.initials}
+                      </div>
+                      <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#0a0f1e] ${member.online ? "bg-green-400" : "bg-slate-600"}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{member.name}</p>
+                      <p className="text-xs text-slate-500 truncate">{member.role}</p>
+                    </div>
+                    <button
+                      onClick={() => alert(`Opening message to ${member.name}...`)}
+                      className="w-7 h-7 rounded-lg bg-white/5 hover:bg-blue-500/10 flex items-center justify-center text-slate-500 hover:text-blue-400 transition-colors">
+                      <MessageSquare className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="px-5 py-3 border-t border-white/5">
+                <Link href="/portal/team" className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
+                  View full team <ArrowUpRight className="w-3 h-3" />
+                </Link>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Quick Links */}
+          <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
+            <Card className="p-5">
+              <h3 className="text-sm font-semibold text-white mb-4">Quick Actions</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: "View Files", href: "/portal/files", icon: FileText, color: "text-blue-400" },
+                  { label: "Invoices", href: "/portal/invoices", icon: DollarSign, color: "text-green-400" },
+                  { label: "Reports", href: "/portal/reports", icon: BarChart3, color: "text-purple-400" },
+                  { label: "Ask AI", href: "/portal/ai", icon: Sparkles, color: "text-cyan-400" },
+                  { label: "Approvals", href: "/portal/approvals", icon: ClipboardCheck, color: "text-orange-400" },
+                  { label: "Support", href: "/portal/support", icon: Shield, color: "text-pink-400" },
+                ].map(item => (
+                  <Link key={item.label} href={item.href}
+                    className="flex items-center gap-2 p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-white/10 transition-all group">
+                    <item.icon className={`w-4 h-4 ${item.color} shrink-0`} />
+                    <span className="text-xs text-slate-400 group-hover:text-slate-200 transition-colors">{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </Card>
+          </motion.div>
+
+        </div>
       </div>
     </div>
   );

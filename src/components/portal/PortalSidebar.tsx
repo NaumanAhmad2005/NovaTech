@@ -6,24 +6,72 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, FolderKanban, Clock, CheckSquare, FolderOpen,
   Calendar, MessageSquare, Receipt, FileSignature, LifeBuoy, Book,
-  Settings, LogOut, ChevronLeft, ChevronRight, Zap, Menu
+  Settings, LogOut, ChevronLeft, ChevronRight, Zap, Palette,
+  Code2, Rocket, TestTube, ClipboardCheck, CreditCard, BarChart3,
+  Bot, Bell, Users, FileText, ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePortalStore } from "@/lib/portalStore";
 
-const navigation = [
-  { name: "Command Center", href: "/portal", icon: LayoutDashboard },
-  { name: "My Projects", href: "/portal/projects", icon: FolderKanban },
-  { name: "Timeline", href: "/portal/timeline", icon: Clock },
-  { name: "Tasks & Milestones", href: "/portal/tasks", icon: CheckSquare },
-  { name: "Files", href: "/portal/files", icon: FolderOpen },
-  { name: "Meetings", href: "/portal/meetings", icon: Calendar },
-  { name: "Messages", href: "/portal/messages", icon: MessageSquare },
-  { name: "Invoices", href: "/portal/invoices", icon: Receipt },
-  { name: "Contracts", href: "/portal/contracts", icon: FileSignature },
-  { name: "Support", href: "/portal/support", icon: LifeBuoy },
-  { name: "Knowledge Base", href: "/portal/docs", icon: Book },
-  { name: "Settings", href: "/portal/settings", icon: Settings },
+const navGroups = [
+  {
+    label: "Overview",
+    items: [
+      { name: "Command Center", href: "/portal", icon: LayoutDashboard },
+      { name: "My Projects", href: "/portal/projects", icon: FolderKanban },
+      { name: "Timeline", href: "/portal/timeline", icon: Clock },
+      { name: "Tasks & Milestones", href: "/portal/tasks", icon: CheckSquare },
+    ],
+  },
+  {
+    label: "Build",
+    items: [
+      { name: "Design Center", href: "/portal/design", icon: Palette },
+      { name: "Development", href: "/portal/development", icon: Code2 },
+      { name: "Deployments", href: "/portal/deployments", icon: Rocket },
+      { name: "Testing & QA", href: "/portal/testing", icon: TestTube },
+    ],
+  },
+  {
+    label: "Collaborate",
+    items: [
+      { name: "Messages", href: "/portal/messages", icon: MessageSquare },
+      { name: "Meetings", href: "/portal/meetings", icon: Calendar },
+      { name: "Approvals", href: "/portal/approvals", icon: ClipboardCheck },
+      { name: "Team", href: "/portal/team", icon: Users },
+    ],
+  },
+  {
+    label: "Assets",
+    items: [
+      { name: "Files", href: "/portal/files", icon: FolderOpen },
+      { name: "Documents", href: "/portal/documents", icon: FileText },
+      { name: "Contracts", href: "/portal/contracts", icon: FileSignature },
+    ],
+  },
+  {
+    label: "Finance",
+    items: [
+      { name: "Invoices", href: "/portal/invoices", icon: Receipt },
+      { name: "Payments", href: "/portal/payments", icon: CreditCard },
+    ],
+  },
+  {
+    label: "Reports & Help",
+    items: [
+      { name: "Reports", href: "/portal/reports", icon: BarChart3 },
+      { name: "Support", href: "/portal/support", icon: LifeBuoy },
+      { name: "Knowledge Base", href: "/portal/docs", icon: Book },
+      { name: "AI Assistant", href: "/portal/ai", icon: Bot },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { name: "Notifications", href: "/portal/notifications", icon: Bell },
+      { name: "Settings", href: "/portal/settings", icon: Settings },
+    ],
+  },
 ];
 
 export default function PortalSidebar() {
@@ -38,14 +86,15 @@ export default function PortalSidebar() {
     window.location.href = '/';
   };
 
+  const isActive = (href: string) =>
+    href === "/portal" ? pathname === "/portal" : pathname === href || pathname.startsWith(`${href}/`);
+
   return (
     <>
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setMobileMenuOpen(false)}
             className="fixed inset-0 bg-[#050816]/80 backdrop-blur-sm z-40 md:hidden"
           />
@@ -54,101 +103,108 @@ export default function PortalSidebar() {
 
       <motion.aside
         initial={false}
-        animate={{ width: sidebarCollapsed ? 80 : 260 }}
+        animate={{ width: sidebarCollapsed ? 72 : 256 }}
+        transition={{ duration: 0.25, ease: "easeInOut" }}
         className={cn(
-          "h-screen flex flex-col bg-transparent border-r border-white/5 z-50 shrink-0",
+          "h-screen flex flex-col bg-[#07091a] border-r border-white/5 z-50 shrink-0",
           "fixed md:sticky top-0 left-0",
           "transition-transform duration-300 md:translate-x-0",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="h-20 flex items-center justify-between px-6 border-b border-white/5">
+        {/* Logo */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-white/5 shrink-0">
           <AnimatePresence mode="wait">
-            {!sidebarCollapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="flex items-center gap-2 overflow-hidden"
-              >
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                  <Zap className="w-4 h-4 text-blue-400" />
+            {(!sidebarCollapsed || mobileMenuOpen) && (
+              <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
+                className="flex items-center gap-2.5 overflow-hidden">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shrink-0">
+                  <Zap className="w-4 h-4 text-white" />
                 </div>
-                <span className="font-bold text-white tracking-wide font-mono text-sm whitespace-nowrap">
-                  PORTAL
-                </span>
+                <span className="font-bold text-white tracking-wider font-mono text-sm whitespace-nowrap">NovaTech</span>
+              </motion.div>
+            )}
+            {sidebarCollapsed && !mobileMenuOpen && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center mx-auto">
+                <Zap className="w-4 h-4 text-white" />
               </motion.div>
             )}
           </AnimatePresence>
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden md:flex w-8 h-8 rounded-lg items-center justify-center hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
+            className="hidden md:flex w-7 h-7 rounded-lg items-center justify-center hover:bg-white/5 text-slate-500 hover:text-white transition-colors shrink-0"
           >
             {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-6 px-3 scrollbar-hide space-y-1">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-            return (
-              <Link key={item.name} href={item.href} onClick={() => setMobileMenuOpen(false)}>
-                <div
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all duration-200 group relative",
-                    isActive
-                      ? "bg-blue-600/10 text-blue-400"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-                  )}
-                >
-                  <item.icon className={cn("w-5 h-5 shrink-0", isActive && "text-blue-500")} />
-                  <AnimatePresence mode="wait">
-                    {(!sidebarCollapsed || mobileMenuOpen) && (
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
-                        className="whitespace-nowrap font-medium text-sm"
-                      >
-                        {item.name}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  {isActive && !sidebarCollapsed && (
-                    <motion.div
-                      layoutId="activeTabPortal"
-                      className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-500 rounded-r-full"
-                    />
-                  )}
-                </div>
-              </Link>
-            );
-          })}
+        {/* Nav groups */}
+        <div className="flex-1 overflow-y-auto py-4 px-2 scrollbar-hide space-y-1">
+          {navGroups.map((group) => (
+            <div key={group.label} className="mb-2">
+              <AnimatePresence mode="wait">
+                {(!sidebarCollapsed || mobileMenuOpen) && (
+                  <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-600 select-none">
+                    {group.label}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+              {group.items.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link key={item.name} href={item.href} onClick={() => setMobileMenuOpen(false)}>
+                    <div
+                      title={sidebarCollapsed && !mobileMenuOpen ? item.name : undefined}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-150 group relative",
+                        sidebarCollapsed && !mobileMenuOpen ? "justify-center" : "",
+                        active
+                          ? "bg-blue-600/10 text-blue-400 border border-blue-500/10"
+                          : "text-slate-500 hover:text-slate-200 hover:bg-white/[0.04]"
+                      )}
+                    >
+                      {active && (
+                        <motion.div layoutId="activeSidebarItem"
+                          className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-blue-500 rounded-r-full" />
+                      )}
+                      <item.icon className={cn("w-[18px] h-[18px] shrink-0", active ? "text-blue-400" : "")} />
+                      <AnimatePresence mode="wait">
+                        {(!sidebarCollapsed || mobileMenuOpen) && (
+                          <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="whitespace-nowrap text-sm font-medium">
+                            {item.name}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </div>
 
-        <div className="p-4 border-t border-white/5">
-          <div 
-            onClick={handleLogout}
-            className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition-colors relative group"
+        {/* User footer */}
+        <div className="p-3 border-t border-white/5">
+          <div onClick={handleLogout}
+            className="flex items-center gap-3 p-2 rounded-xl hover:bg-red-500/5 cursor-pointer transition-colors group"
             title="Sign Out"
           >
-            <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 shrink-0 overflow-hidden flex items-center justify-center">
-              <span className="text-sm font-bold text-white">AH</span>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
+              <span className="text-xs font-bold text-white">NT</span>
             </div>
             <AnimatePresence mode="wait">
               {(!sidebarCollapsed || mobileMenuOpen) && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex-1 overflow-hidden"
-                >
-                  <div className="text-sm font-medium text-white truncate">Ahmed Client</div>
-                  <div className="text-xs text-slate-500 truncate">GlobalTech Inc.</div>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-white truncate">Client Portal</div>
+                  <div className="text-xs text-slate-500 truncate">Sign out</div>
                 </motion.div>
               )}
             </AnimatePresence>
-            <LogOut className={cn("w-4 h-4 text-slate-500 group-hover:text-red-400 transition-colors shrink-0", (sidebarCollapsed && !mobileMenuOpen) && "hidden")} />
+            <LogOut className={cn("w-4 h-4 text-slate-600 group-hover:text-red-400 transition-colors shrink-0",
+              (sidebarCollapsed && !mobileMenuOpen) && "hidden")} />
           </div>
         </div>
       </motion.aside>
