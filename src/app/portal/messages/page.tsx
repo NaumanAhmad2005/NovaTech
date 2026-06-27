@@ -1,182 +1,268 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { Send, Loader2, MessageSquare, Lock } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MessageSquare, Hash, Send, Smile, Paperclip, Search, Pin, AtSign, ChevronRight } from "lucide-react";
 
-interface Message {
-  id: string;
-  content: string;
-  sender_role: "client" | "admin";
-  sender_id: string;
-  created_at: string;
-}
-
-const DEMO_MESSAGES: Message[] = [
-  { id: "1", content: "Hello! Your project is progressing well. We've completed the authentication module this week.", sender_role: "admin", sender_id: "admin", created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString() },
-  { id: "2", content: "That's great to hear! When will the payment gateway be ready?", sender_role: "client", sender_id: "client", created_at: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString() },
-  { id: "3", content: "We're targeting July 1st for the Payment Gateway milestone. We're currently building the Stripe webhook handlers.", sender_role: "admin", sender_id: "admin", created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
+const CHANNELS = [
+  { id: "general",     name: "general",     desc: "General project updates and announcements", unread: 0 },
+  { id: "development", name: "development",  desc: "Backend & frontend development discussions", unread: 2 },
+  { id: "design",      name: "design",       desc: "UI/UX design feedback and approvals", unread: 5 },
+  { id: "testing",     name: "testing",      desc: "QA reports, bugs, and test results", unread: 0 },
+  { id: "billing",     name: "billing",      desc: "Invoices, payments, and finance queries", unread: 1 },
+  { id: "support",     name: "support",      desc: "Technical questions and help requests", unread: 0 },
 ];
 
-function timeStr(dateStr: string) {
-  return new Date(dateStr).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+type Reaction = { emoji: string; count: number; reacted: boolean };
+interface Message {
+  id: string; sender: string; initials: string; color: string;
+  time: string; content: string; pinned?: boolean;
+  reactions?: Reaction[];
 }
-function dateStr(dateStr: string) {
-  const d = new Date(dateStr);
-  const today = new Date();
-  if (d.toDateString() === today.toDateString()) return "Today";
-  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
+
+const CHANNEL_MESSAGES: Record<string, Message[]> = {
+  general: [
+    { id: "1", sender: "Sarah Chen", initials: "SC", color: "from-blue-500 to-cyan-400", time: "10:15 AM", content: "Good morning team! Quick update — authentication module has been deployed to staging and all tests are passing. 🎉", reactions: [{ emoji: "🎉", count: 3, reacted: false }, { emoji: "👍", count: 2, reacted: true }] },
+    { id: "2", sender: "Marcus Dev", initials: "MD", color: "from-purple-500 to-pink-400", time: "10:22 AM", content: "Confirmed! The auth flow is solid. v1.4.7 hotfix for the webhook issue is also staged and ready for approval.", reactions: [] },
+    { id: "3", sender: "Sarah Chen", initials: "SC", color: "from-blue-500 to-cyan-400", time: "10:30 AM", content: "@Ahmed — can you review and approve the Payment Flow designs when you get a chance? Aisha needs the go-ahead to start implementation.", reactions: [{ emoji: "👀", count: 1, reacted: false }] },
+    { id: "4", sender: "You", initials: "AH", color: "from-slate-600 to-slate-700", time: "11:05 AM", content: "Will do! I'll check the designs after our morning meeting.", reactions: [] },
+    { id: "5", sender: "Aisha UI", initials: "AU", color: "from-orange-500 to-yellow-400", time: "11:10 AM", content: "Thank you! The designs are in the Design Center tab — all three screens are ready for your review.", reactions: [{ emoji: "🙏", count: 1, reacted: false }] },
+  ],
+  design: [
+    { id: "1", sender: "Aisha UI", initials: "AU", color: "from-orange-500 to-yellow-400", time: "9:00 AM", content: "Just uploaded Payment Flow v4 to the Design Center. This is the most polished version yet — checkout, 3DS screen, and success/failure states all included.", pinned: true, reactions: [{ emoji: "🔥", count: 4, reacted: false }] },
+    { id: "2", sender: "Reza Frontend", initials: "RF", color: "from-green-500 to-emerald-400", time: "9:45 AM", content: "Looks amazing @Aisha! The 3DS screen especially — much cleaner than v3.", reactions: [] },
+    { id: "3", sender: "You", initials: "AH", color: "from-slate-600 to-slate-700", time: "10:00 AM", content: "I'll review these today. Really like the direction.", reactions: [] },
+    { id: "4", sender: "Aisha UI", initials: "AU", color: "from-orange-500 to-yellow-400", time: "10:02 AM", content: "No rush, but if we can get approval by EOD it allows Reza to start implementation Monday morning!", reactions: [{ emoji: "🤞", count: 2, reacted: false }] },
+    { id: "5", sender: "Sarah Chen", initials: "SC", color: "from-blue-500 to-cyan-400", time: "10:30 AM", content: "I've also left a few notes in the Approvals tab for context on the design decisions.", reactions: [] },
+  ],
+  development: [
+    { id: "1", sender: "Marcus Dev", initials: "MD", color: "from-purple-500 to-pink-400", time: "8:30 AM", content: "Fixed the race condition in the Stripe webhook handler. The issue was two events arriving within 50ms — added a Redis queue to handle ordering. Build v1.4.7 is staged.", reactions: [{ emoji: "💪", count: 3, reacted: false }] },
+    { id: "2", sender: "Leila QA", initials: "LQ", color: "from-pink-500 to-rose-400", time: "9:10 AM", content: "Ran the full test suite on v1.4.7 — all 324 unit tests pass, E2E is clean. Ready for production approval.", reactions: [{ emoji: "✅", count: 2, reacted: true }] },
+    { id: "3", sender: "Omar DevOps", initials: "OD", color: "from-cyan-500 to-blue-400", time: "9:45 AM", content: "Deployment pipeline is ready. Just need the client's approval to push to production. It's a 2-minute deploy, no downtime expected.", reactions: [] },
+  ],
+  billing: [
+    { id: "1", sender: "Sarah Chen", initials: "SC", color: "from-blue-500 to-cyan-400", time: "Jun 27", content: "Invoice #INV-004 for $22,500 has been generated and sent. This covers Sprint 13-14 as per the payment schedule. Due date is July 15.", reactions: [] },
+  ],
+  testing: [],
+  support: [],
+};
+
+const EMOJIS = ["👍", "❤️", "🎉", "🔥", "🙏", "✅", "👀", "💪"];
 
 export default function MessagesPage() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [projectId, setProjectId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isDemo, setIsDemo] = useState(false);
+  const [activeChannel, setActiveChannel] = useState("general");
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState(CHANNEL_MESSAGES);
+  const [showEmoji, setShowEmoji] = useState<string | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const supabase = createClient();
 
-  useEffect(() => {
-    const load = async () => {
-      if (document.cookie.includes("demo_client_session=true")) {
-        setIsDemo(true);
-        setMessages(DEMO_MESSAGES);
-        setLoading(false);
-        return;
-      }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) { setLoading(false); return; }
-      setUserId(session.user.id);
-      const { data: projects } = await supabase.from("projects").select("id").eq("client_id", session.user.id).limit(1);
-      if (projects && projects.length > 0) {
-        const pid = projects[0].id;
-        setProjectId(pid);
-        const { data: msgs } = await supabase.from("messages").select("*").eq("project_id", pid).order("created_at", { ascending: true });
-        setMessages(msgs || []);
-      }
-      setLoading(false);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, activeChannel]);
+
+  const channelMessages = messages[activeChannel] || [];
+  const activeChannel_ = CHANNELS.find(c => c.id === activeChannel)!;
+
+  const sendMessage = () => {
+    if (!input.trim()) return;
+    const newMsg: Message = {
+      id: Date.now().toString(), sender: "You", initials: "AH",
+      color: "from-slate-600 to-slate-700",
+      time: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+      content: input.trim(), reactions: [],
     };
-    load();
-  }, [supabase]);
-
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
-
-  const handleSend = async () => {
-    if (!newMessage.trim()) return;
-    setSending(true);
-    const content = newMessage.trim();
-    setNewMessage("");
-    if (isDemo) {
-      setMessages(prev => [...prev, { id: Date.now().toString(), content, sender_role: "client", sender_id: "client", created_at: new Date().toISOString() }]);
-      setSending(false);
-      return;
+    setMessages(prev => ({ ...prev, [activeChannel]: [...(prev[activeChannel] || []), newMsg] }));
+    setInput("");
+    // Simulate reply after 2s on general channel
+    if (activeChannel === "general") {
+      setIsTyping(true);
+      setTimeout(() => {
+        const reply: Message = {
+          id: (Date.now() + 1).toString(), sender: "Sarah Chen", initials: "SC",
+          color: "from-blue-500 to-cyan-400",
+          time: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+          content: "Got it! I'll follow up on that shortly. 👍",
+          reactions: [],
+        };
+        setMessages(prev => ({ ...prev, [activeChannel]: [...(prev[activeChannel] || []), reply] }));
+        setIsTyping(false);
+      }, 2000);
     }
-    if (!projectId || !userId) { setSending(false); return; }
-    const { data } = await supabase.from("messages").insert({ project_id: projectId, sender_id: userId, sender_role: "client", content }).select().single();
-    if (data) setMessages(prev => [...prev, data]);
-    setSending(false);
   };
 
-  // Group messages by date
-  const grouped: { date: string; msgs: Message[] }[] = [];
-  for (const msg of messages) {
-    const d = dateStr(msg.created_at);
-    const last = grouped[grouped.length - 1];
-    if (last && last.date === d) last.msgs.push(msg);
-    else grouped.push({ date: d, msgs: [msg] });
-  }
+  const addReaction = (channelId: string, msgId: string, emoji: string) => {
+    setMessages(prev => ({
+      ...prev,
+      [channelId]: prev[channelId].map(m => {
+        if (m.id !== msgId) return m;
+        const existing = m.reactions?.find(r => r.emoji === emoji);
+        if (existing) {
+          return { ...m, reactions: m.reactions?.map(r => r.emoji === emoji ? { ...r, count: r.reacted ? r.count - 1 : r.count + 1, reacted: !r.reacted } : r) };
+        }
+        return { ...m, reactions: [...(m.reactions || []), { emoji, count: 1, reacted: true }] };
+      }),
+    }));
+    setShowEmoji(null);
+  };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-10rem)] max-h-[800px]">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Messages</h1>
-          <p className="text-slate-400 text-sm mt-1">Direct line to your project team.</p>
+    <div className="flex h-[calc(100vh-8rem)] max-h-[800px] rounded-2xl overflow-hidden border border-white/5 bg-[#0a0f1e]">
+      {/* Sidebar — channels */}
+      <div className="w-56 border-r border-white/5 flex flex-col shrink-0 hidden md:flex">
+        <div className="p-4 border-b border-white/5">
+          <p className="text-white font-bold text-sm">Messages</p>
+          <p className="text-slate-500 text-xs mt-0.5">GlobalTech Project</p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-          Team Online
+
+        <div className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+          <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-slate-600">Channels</p>
+          {CHANNELS.map(ch => (
+            <button key={ch.id} onClick={() => setActiveChannel(ch.id)}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors text-left ${activeChannel === ch.id ? "bg-blue-600/10 text-blue-400" : "text-slate-500 hover:text-slate-200 hover:bg-white/5"}`}>
+              <span className="flex items-center gap-2 text-sm">
+                <Hash className="w-3.5 h-3.5 shrink-0" />
+                {ch.name}
+              </span>
+              {ch.unread > 0 && (
+                <span className="w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center font-bold shrink-0">{ch.unread}</span>
+              )}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Chat window */}
-      <div className="flex-1 rounded-2xl bg-[#0F172A] border border-white/5 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-          {loading ? (
-            <div className="flex justify-center pt-12"><Loader2 className="w-6 h-6 text-blue-400 animate-spin" /></div>
-          ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center py-12">
-              <MessageSquare className="w-10 h-10 text-slate-600 mb-3" />
-              <p className="text-slate-400 font-medium">No messages yet</p>
-              <p className="text-slate-600 text-sm mt-1">Send a message to your project team below.</p>
+      {/* Main chat area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Channel header */}
+        <div className="h-14 px-5 flex items-center justify-between border-b border-white/5 shrink-0">
+          <div className="flex items-center gap-2">
+            <Hash className="w-4 h-4 text-slate-500" />
+            <span className="text-white font-bold text-sm">{activeChannel_.name}</span>
+            <span className="text-slate-500 text-xs hidden md:block">— {activeChannel_.desc}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => alert("Search coming soon...")} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+              <Search className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => alert("Pinned messages...")} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+              <Pin className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 scrollbar-thin scrollbar-thumb-white/10">
+          {channelMessages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <MessageSquare className="w-10 h-10 text-slate-700 mb-3" />
+              <p className="text-slate-500 font-medium">No messages yet</p>
+              <p className="text-slate-600 text-sm mt-1">Start the conversation in #{activeChannel_.name}</p>
             </div>
           ) : (
-            grouped.map(({ date, msgs }) => (
-              <div key={date}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex-1 h-px bg-white/5" />
-                  <span className="text-xs text-slate-500 font-medium">{date}</span>
-                  <div className="flex-1 h-px bg-white/5" />
-                </div>
-                <div className="space-y-3">
-                  {msgs.map((msg) => {
-                    const isClient = msg.sender_role === "client";
-                    return (
-                      <motion.div
-                        key={msg.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`flex ${isClient ? "justify-end" : "justify-start"}`}
-                      >
-                        <div className={`max-w-[70%] ${isClient ? "items-end" : "items-start"} flex flex-col gap-1`}>
-                          <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
-                            isClient
-                              ? "bg-blue-600 text-white rounded-tr-sm"
-                              : "bg-white/5 border border-white/5 text-slate-200 rounded-tl-sm"
-                          }`}>
-                            {msg.content}
-                          </div>
-                          <span className="text-[11px] text-slate-600 px-1">{timeStr(msg.created_at)}</span>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))
+            channelMessages.map((msg, i) => {
+              const isMe = msg.sender === "You";
+              const prevSender = i > 0 ? channelMessages[i - 1].sender : null;
+              const grouped = prevSender === msg.sender;
+              return (
+                <motion.div key={msg.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+                  className={`flex gap-3 group relative ${isMe ? "flex-row-reverse" : ""} ${grouped ? "mt-0.5" : "mt-4"}`}>
+
+                  {/* Avatar */}
+                  {!grouped ? (
+                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${msg.color} flex items-center justify-center text-[10px] font-bold text-white shrink-0 mt-0.5`}>
+                      {msg.initials}
+                    </div>
+                  ) : <div className="w-8 shrink-0" />}
+
+                  <div className={`flex flex-col max-w-[70%] ${isMe ? "items-end" : "items-start"}`}>
+                    {!grouped && (
+                      <div className={`flex items-baseline gap-2 mb-1 ${isMe ? "flex-row-reverse" : ""}`}>
+                        <span className="text-sm font-semibold text-white">{msg.sender}</span>
+                        <span className="text-[10px] text-slate-600">{msg.time}</span>
+                        {msg.pinned && <Pin className="w-3 h-3 text-yellow-400" />}
+                      </div>
+                    )}
+
+                    <div className={`relative px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                      isMe ? "bg-blue-600 text-white rounded-tr-sm" : "bg-white/[0.05] text-slate-200 rounded-tl-sm border border-white/5"
+                    }`}>
+                      {msg.content}
+                    </div>
+
+                    {/* Reactions */}
+                    {msg.reactions && msg.reactions.filter(r => r.count > 0).length > 0 && (
+                      <div className={`flex gap-1 mt-1 flex-wrap ${isMe ? "justify-end" : ""}`}>
+                        {msg.reactions.filter(r => r.count > 0).map(r => (
+                          <button key={r.emoji} onClick={() => addReaction(activeChannel, msg.id, r.emoji)}
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${r.reacted ? "bg-blue-500/20 border-blue-500/40 text-blue-300" : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"}`}>
+                            {r.emoji} <span>{r.count}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Hover actions */}
+                    <div className={`opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 mt-1 ${isMe ? "justify-end" : ""}`}>
+                      <button onClick={() => setShowEmoji(showEmoji === msg.id ? null : msg.id)}
+                        className="w-6 h-6 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-500 hover:text-white transition-colors">
+                        <Smile className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Emoji picker */}
+                    <AnimatePresence>
+                      {showEmoji === msg.id && (
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+                          className={`absolute z-10 top-full mt-1 p-2 rounded-xl bg-[#111827] border border-white/10 flex gap-1 ${isMe ? "right-0" : "left-8"}`}>
+                          {EMOJIS.map(e => (
+                            <button key={e} onClick={() => addReaction(activeChannel, msg.id, e)}
+                              className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center text-lg transition-colors">
+                              {e}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </motion.div>
+              );
+            })
           )}
+
+          {/* Typing indicator */}
+          <AnimatePresence>
+            {isTyping && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-3 mt-4">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-[10px] font-bold text-white shrink-0">SC</div>
+                <div className="px-4 py-2.5 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-1.5">
+                  {[0, 1, 2].map(j => (
+                    <motion.span key={j} className="w-1.5 h-1.5 rounded-full bg-slate-400"
+                      animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1, repeat: Infinity, delay: j * 0.2 }} />
+                  ))}
+                </div>
+                <span className="text-xs text-slate-500">Sarah Chen is typing…</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div ref={bottomRef} />
         </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-white/5">
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-              placeholder="Type a message..."
-              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/30 transition-all"
-            />
-            <button
-              onClick={handleSend}
-              disabled={!newMessage.trim() || sending}
-              className="w-11 h-11 rounded-xl bg-blue-600 hover:bg-blue-500 flex items-center justify-center text-white transition-colors disabled:opacity-40 shrink-0"
-            >
-              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+        <div className="p-4 border-t border-white/5 shrink-0">
+          <div className="flex items-center gap-3 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl focus-within:ring-2 focus-within:ring-blue-500/40 focus-within:border-blue-500/30 transition-all">
+            <button onClick={() => alert("Attach file...")} className="text-slate-500 hover:text-white transition-colors shrink-0">
+              <Paperclip className="w-4 h-4" />
+            </button>
+            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()}
+              placeholder={`Message #${activeChannel_.name}`}
+              className="flex-1 bg-transparent text-white text-sm placeholder:text-slate-600 focus:outline-none" />
+            <button onClick={() => alert("Emoji picker...")} className="text-slate-500 hover:text-white transition-colors shrink-0">
+              <Smile className="w-4 h-4" />
+            </button>
+            <button onClick={sendMessage} disabled={!input.trim()}
+              className="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-500 flex items-center justify-center text-white transition-colors disabled:opacity-40 shrink-0">
+              <Send className="w-3.5 h-3.5" />
             </button>
           </div>
-          <p className="text-[11px] text-slate-600 mt-2 flex items-center gap-1">
-            <Lock className="w-3 h-3" /> End-to-end encrypted. Messages are visible only to you and your project team.
-          </p>
         </div>
       </div>
     </div>
