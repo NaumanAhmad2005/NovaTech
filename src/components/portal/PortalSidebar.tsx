@@ -8,7 +8,7 @@ import {
   Calendar, MessageSquare, Receipt, FileSignature, LifeBuoy, Book,
   Settings, LogOut, ChevronLeft, ChevronRight, Zap, Palette,
   Code2, Rocket, TestTube, ClipboardCheck, CreditCard, BarChart3,
-  Bot, Bell, Users, FileText, ShieldCheck
+  Bot, Bell, Users, FileText, ShieldCheck, RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePortalStore } from "@/lib/portalStore";
@@ -38,6 +38,7 @@ const navGroups = [
       { name: "Messages", href: "/portal/messages", icon: MessageSquare },
       { name: "Meetings", href: "/portal/meetings", icon: Calendar },
       { name: "Approvals", href: "/portal/approvals", icon: ClipboardCheck },
+      { name: "Change Requests", href: "/portal/changes", icon: RefreshCw },
       { name: "Team", href: "/portal/team", icon: Users },
     ],
   },
