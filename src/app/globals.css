@@ -510,3 +510,41 @@ section {
 .theme-toggle-icon {
   transition: transform 0.4s ease, opacity 0.3s ease;
 }
+
+/* ─── Portal polish utilities ───────────────────────────── */
+
+/* Hide scrollbar but keep scrollability */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Thin custom scrollbar for chat / file lists */
+.scrollbar-thin::-webkit-scrollbar       { width: 4px; height: 4px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+.scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* Skeleton shimmer for loading states */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.6s infinite;
+  border-radius: 8px;
+}
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid rgba(59,130,246,0.6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Card hover lift */
+.card-hover:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(0,0,0,0.25); }
+
+/* Status dot pulse */
+@keyframes status-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+.status-pulse { animation: status-pulse 2s ease-in-out infinite; }
