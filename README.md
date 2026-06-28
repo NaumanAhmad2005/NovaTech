@@ -1,137 +1,236 @@
-<div align="center">
+# NovaTech — Enterprise SaaS Platform
 
-<br />
+> A full-scale, production-grade software development agency platform with a premium client-facing portal, an internal admin CRM, and a high-performance marketing website — all sharing a single Supabase backend.
+
+---
+
+## 🏛 Architecture
 
 ```
-███╗   ██╗ ██████╗ ██╗   ██╗ █████╗ ████████╗███████╗ ██████╗██╗  ██╗
-████╗  ██║██╔═══██╗██║   ██║██╔══██╗╚══██╔══╝██╔════╝██╔════╝██║  ██║
-██╔██╗ ██║██║   ██║██║   ██║███████║   ██║   █████╗  ██║     ███████║
-██║╚██╗██║██║   ██║╚██╗ ██╔╝██╔══██║   ██║   ██╔══╝  ██║     ██╔══██║
-██║ ╚████║╚██████╔╝ ╚████╔╝ ██║  ██║   ██║   ███████╗╚██████╗██║  ██║
-╚═╝  ╚═══╝ ╚═════╝   ╚═══╝  ╚═╝  ╚═╝   ╚═╝   ╚══════╝ ╚═════╝╚═╝  ╚═╝
+         Internet
+             │
+ ┌───────────┼───────────────┐
+ │           │               │
+Main Site  Client Portal   Admin CRM
+             │               │
+             └──── Supabase ──┘
+                  (PostgreSQL + Auth + Storage + Realtime)
 ```
 
-### **Engineering Tomorrow**
-
-*A fully integrated Enterprise Platform featuring a high-performance marketing website, a comprehensive Client Portal, and a powerful Admin CRM/CMS.*
-
-<br />
-
-![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-v4-38BDF8?style=for-the-badge&logo=tailwindcss)
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=for-the-badge&logo=framer)
-![Three.js](https://img.shields.io/badge/Three.js-black?style=for-the-badge&logo=three.js)
-
-<br />
-
-</div>
+All three modules share one database. A user's role (`admin`, `active_client`, `normal_user`) is stored in Supabase and enforced via middleware RBAC on every protected route.
 
 ---
 
-## ✨ Overview
+## 📦 Tech Stack
 
-**NovaTech** has evolved from a standalone corporate website into a **full-scale Enterprise SaaS Platform**. The platform is split into three seamlessly synchronized modules:
-
-1. **The Main Website**: A stunning, 3D-accelerated public landing page showcasing services, portfolios, tech stacks, and AI capabilities. 
-2. **The Client Portal**: A secure dashboard where authenticated clients can track their project timelines, download deliverables, pay invoices, request meetings, and open support tickets.
-3. **The Admin CRM / CMS**: A comprehensive command center for NovaTech administrators to manage project requests, invite clients, oversee deployments, monitor infrastructure, chat with clients in real-time, and edit website content live.
-
-> **Design Philosophy:** Minimal. Professional. Dark. Elegant.  
-> **Goal:** "Provide an end-to-end digital experience from first impression to final project delivery."
-
----
-
-## 🚀 The Three Pillars
-
-### 1. The Marketing Website (`/`)
-- 13 highly-polished sections (Hero, Tech Stack, AI, Process, Testimonials, Pricing, Blog, etc.)
-- Interactive 3D Hero Globe and Neural Network animations.
-- Buttery-smooth scroll with Lenis and scroll-triggered animations via Framer Motion.
-- Secure, rate-limited Contact and Newsletter forms.
-
-### 2. The Client Portal (`/portal`)
-- **Authentication Gateway**: Secured via Supabase Auth.
-- **Timeline tracking**: Clients can see live updates of their active project phase.
-- **Deliverables & Invoices**: Dedicated tabs for securely downloading files and tracking billing.
-- **Support & Meetings**: Open encrypted chat threads with the NovaTech team and schedule sync calls.
-
-### 3. The Admin Center (`/admin`)
-- **Live CRM**: Receive project requests from the main website. Approving a request automatically converts the user into an active client and provisions a new project dashboard for them.
-- **Website CMS**: Edit the content (text, stats, labels) of the main website live. Changes are saved to Supabase and immediately reflected on the public site without redeploying.
-- **Infrastructure & AI**: Monitor system metrics, review CI/CD deployment logs, and interact with a mock AI Sandbox for generating architecture suggestions.
-- **Finance & Clients**: Oversee company revenue, overdue invoices, and invite new users manually to the platform.
+| Layer        | Technology                                      |
+|--------------|-------------------------------------------------|
+| Framework    | **Next.js 16** (App Router, Server Components)  |
+| Language     | **TypeScript** (strict mode)                    |
+| Styling      | **TailwindCSS v4** + custom CSS design tokens   |
+| Animations   | **Framer Motion**                               |
+| Charts       | **Recharts**                                    |
+| Database     | **Supabase** (PostgreSQL + Row-Level Security)  |
+| Auth         | **Supabase Auth** (Email, Google, GitHub OAuth) |
+| Icons        | **Lucide React**                                |
+| Fonts        | Inter · Space Grotesk · JetBrains Mono          |
 
 ---
 
-## 🔧 Environment Setup
+## 🧩 Platform Modules
 
-Create a `.env.local` file in the `novatech/` directory with the following keys:
+### 1. Main Website (`/`)
+The public-facing marketing site with 3D animations, lead generation, and project brief submission.
 
+- Hero with animated background & canvas effects
+- Services, Portfolio, Team, and Pricing sections
+- **Project Brief Form** — logged-in users submit project requests that flow into the Admin CRM
+- Auth guard: guests are prompted to log in before submitting a brief
+- Internationalization-ready structure
+
+### 2. Client Portal (`/portal`)
+A comprehensive digital workspace for every NovaTech client. Mirrors the UX of Linear + Stripe + Figma.
+
+#### Command Center (Dashboard)
+- Live project progress ring with sprint status
+- Interactive milestone roadmap (8 phases)
+- AI brief drawer — Nova AI summary of the week
+- KPI cards: progress, days to delivery, team count, budget used
+- Pending actions, team online status, quick-action grid
+- Recent activity feed
+
+#### Project Management
+| Page | Features |
+|------|----------|
+| **My Projects** | Progress rings, health badges, team avatars, sprint bars |
+| **Timeline** | 8-phase visual roadmap with animated connectors |
+| **Tasks & Milestones** | Two-tab view, status filters, priority badges, animated bars |
+
+#### Build Visibility
+| Page | Features |
+|------|----------|
+| **Design Center** | Version history, approve/reject, comment threads, Figma link |
+| **Development** | Layer progress (Frontend/Backend/DB/AI), feature module bars |
+| **Deployments** | Live env cards (Prod/Staging/Dev), build history with status |
+| **Testing & QA** | Test suites, bug tracker, Lighthouse score, security audit |
+
+#### Collaboration
+| Page | Features |
+|------|----------|
+| **Messages** | Slack-like channels, emoji reactions, typing indicator |
+| **Meetings** | Agenda view, meeting notes, action items, request modal |
+| **Approvals** | Live approve/reject, categories, comment threads |
+| **Change Requests** | Submit scope changes, cost/timeline impact display |
+| **Team** | 8-member cards, availability, responsibilities, message/email |
+
+#### Assets & Finance
+| Page | Features |
+|------|----------|
+| **Files** | Grid/list toggle, search, NEW badges, preview + download |
+| **Documents** | Search, category filters, bookmark, preview + download |
+| **Contracts** | NDA/MSA/CR status, sign-now flow, expand details |
+| **Invoices** | Payment progress bar, pay-now CTA, download receipts |
+| **Payments** | Recharts area chart, transaction history |
+
+#### Reports & Help
+| Page | Features |
+|------|----------|
+| **Reports** | Sprint velocity, health pie, weekly chart, PDF library |
+| **AI Assistant** | Full chat UI, typing indicator, smart mock responses |
+| **Support** | Ticket threads, reply input, priority/category, SLA info |
+| **Knowledge Base** | Search, 6 categories, bookmarks, featured articles |
+| **Notifications** | Type icons, unread badges, urgent flags, mark-as-read |
+| **Settings** | Profile, 2FA, notification toggles, privacy, language |
+
+### 3. Admin CRM (`/admin`)
+Internal command center for the NovaTech team.
+
+- **Dashboard** — KPIs, request queue, revenue, active projects
+- **Projects** — Full CRUD, project details, sprint management
+- **Clients** — Client profiles, project assignment, contact details
+- **Finance** — Invoice generation, payment tracking
+- **CMS** — Live content editing synced to the main website
+- **Deployments** — Trigger and monitor build pipelines
+- **Messages** — Internal team messaging
+- **Settings** — Platform configuration, team management
+- **AI Tools** — Admin AI assistant for internal analysis
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- A [Supabase](https://supabase.com) project
+
+### 1. Clone & install
+```bash
+git clone https://github.com/NaumanAhmad2005/NovaTech.git
+cd NovaTech/novatech
+npm install
+```
+
+### 2. Environment variables
+Create `.env.local`:
 ```env
-# ── WhatsApp Notifications (Optional) ───────────────────────────────────
-WHATSAPP_PHONE=your_number
-WHATSAPP_APIKEY=your_callmebot_apikey_here
-
-# ── Supabase Setup (Required for Portal, Admin CRM, and CMS) ────────────
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-### Supabase Table Setup (Key Schemas)
-To fully utilize the CRM and Client Portal, ensure your Supabase database has the following tables:
-- `client_profiles`: Stores `user_id`, `role` (normal_user, active_client, admin).
-- `projects`: Tracks project status, phase, budget, and links to `client_profiles`.
-- `site_content`: Key/value store powering the Admin CMS.
+### 3. Run locally
+```bash
+npm run dev
+```
 
-*(Note: The system contains a fallback `demoDb.ts` JSON-based database structure so the UI remains interactive even if Supabase is temporarily down).*
+Open [http://localhost:3000](http://localhost:3000).
 
----
-
-## 🧱 Tech Stack
-
-| Category | Technologies |
-|----------|-------------|
-| **Framework** | Next.js 16 (App Router) |
-| **Language** | TypeScript 5 |
-| **Authentication & DB** | Supabase (PostgreSQL) |
-| **Styling** | TailwindCSS v4 + Custom CSS |
-| **Animation** | Framer Motion + Lenis (Smooth Scroll) |
-| **3D Graphics** | Three.js + React Three Fiber + Drei |
-| **Data Viz** | Recharts |
-| **Icons** | Lucide React |
+### 4. Demo access
+- **Client Portal** — log in with any Supabase user that has `role: active_client`
+- **Admin Panel** — log in with `role: admin`
+- **Demo mode** — set cookie `demo_client_session=true` to bypass auth for UI previews
 
 ---
 
-## 🔒 Security & Performance
-- **Role-Based Access Control (RBAC)**: Middleware strictly prevents `normal_user` accounts from accessing `/portal` and completely locks down `/admin` to non-admin accounts.
-- **XSS Prevention**: All user inputs stripped of HTML tags, JS protocols, and event handlers before processing.
-- **Rate Limiting**: Integrated protections on public-facing forms.
-- **Performance**: Heavy 3D components are chunked and lazy-loaded via `next/dynamic` with SSR disabled to maintain lightning-fast initial page loads.
+## 📁 Project Structure
+
+```
+src/
+├── app/
+│   ├── (main)/          # Public website pages
+│   ├── portal/          # Client portal (22 pages)
+│   │   ├── page.tsx         # Command Center
+│   │   ├── projects/
+│   │   ├── timeline/
+│   │   ├── tasks/
+│   │   ├── design/
+│   │   ├── development/
+│   │   ├── deployments/
+│   │   ├── testing/
+│   │   ├── messages/
+│   │   ├── meetings/
+│   │   ├── approvals/
+│   │   ├── changes/
+│   │   ├── team/
+│   │   ├── files/
+│   │   ├── documents/
+│   │   ├── contracts/
+│   │   ├── invoices/
+│   │   ├── payments/
+│   │   ├── reports/
+│   │   ├── ai/
+│   │   ├── support/
+│   │   ├── docs/
+│   │   ├── notifications/
+│   │   └── settings/
+│   └── admin/           # Admin CRM
+├── components/
+│   ├── portal/          # Portal sidebar, topbar
+│   └── admin/           # Admin sidebar, components
+└── lib/
+    ├── supabase/         # Supabase client/server
+    ├── portalStore.ts    # Zustand portal state
+    └── demoDb.ts         # Fallback demo data
+```
 
 ---
 
-## 🌟 What's New in v2?
-- ✅ **Fully interactive Admin Panel** completed with mock alerts and live API synchronization.
-- ✅ **Touchpad scrolling bug globally resolved** — navigation through complex nested layouts is now perfectly smooth.
-- ✅ **Project Request Workflow** fully implemented: An unauthenticated user filling the contact form is seamlessly prompted to create an account, after which their project brief is saved and synced directly to the Admin CRM for approval.
-- ✅ **Real-time CMS System** built-in.
+## 🔒 Security
+
+- Supabase Row-Level Security on all tables
+- Middleware-based RBAC (admin / active_client / normal_user)
+- 2FA support via Supabase Auth
+- OWASP Top 10 audit — Q2 2026 passed
+- All file URLs are pre-signed, short-lived
 
 ---
 
-## 📄 License
+## 📊 Database Tables
 
-This project is proprietary software owned by **NovaTech Technologies Inc.**  
-All rights reserved © 2026.
+| Table | Description |
+|-------|-------------|
+| `users` | Auth users + role assignment |
+| `project_requests` | Inbound client briefs from main site |
+| `projects` | Active projects with metadata |
+| `sprints` | Sprint records linked to projects |
+| `tasks` | Task items per sprint |
+| `meetings` | Scheduled meetings per project |
+| `files` | Project file records |
+| `invoices` | Invoice records |
+| `messages` | Channel messages per project |
+| `notifications` | Per-user notification queue |
 
 ---
 
-<div align="center">
+## 🗺 Roadmap
 
-**Built with ❤️ by the NovaTech Engineering Team**
+- [ ] Supabase Realtime — live notifications
+- [ ] Google Calendar sync for meetings
+- [ ] Stripe payment gateway integration
+- [ ] OpenAI GPT-4o for Nova AI backend
+- [ ] WhatsApp Business API notifications
+- [ ] Mobile app (React Native)
 
-*Engineering Tomorrow — Today.*
+---
 
-</div>
+Built with ❤️ by **NovaTech Technologies**
